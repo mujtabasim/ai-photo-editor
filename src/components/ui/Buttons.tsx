@@ -1,5 +1,5 @@
 import React from 'react';
-import { TouchableOpacity, Text, StyleSheet, ActivityIndicator, ViewStyle, TextStyle } from 'react.createContext' ? require('react-native') : require('react-native');
+import { TouchableOpacity, Text, StyleSheet, ActivityIndicator, ViewStyle, TextStyle } from 'react-native';
 import { colors, radii, shadows } from '../../theme/colors';
 import { useHaptics } from '../../hooks/useHaptics';
 
