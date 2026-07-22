@@ -1,12 +1,12 @@
 import React from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
+import * as ImagePicker from 'expo-image-picker';
 import { colors, radii, shadows } from '../../src/theme/colors';
-import { PrimaryButton, SecondaryButton } from '../../src/components/ui/Buttons';
+import { PrimaryButton } from '../../src/components/ui/Buttons';
 import { GlassCard } from '../../src/components/ui/Cards';
 import { useEditorStore } from '../../src/store/useEditorStore';
 import { MOCK_PROJECTS } from '../../src/constants/mockData';
-
 import { uploadApi } from '../../src/services';
 
 export default function UploadScreen() {
@@ -37,6 +37,52 @@ export default function UploadScreen() {
     router.replace('/editor');
   };
 
+  const handlePickImage = async () => {
+    try {
+      const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (!permissionResult.granted) {
+        Alert.alert('Permission Required', 'Permission to access photo library is required to edit photos.');
+        return;
+      }
+
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: false,
+        quality: 1,
+      });
+
+      if (!result.canceled && result.assets && result.assets.length > 0) {
+        await handleSelectSample(result.assets[0].uri);
+      }
+    } catch (err: any) {
+      console.warn('Image picker error:', err?.message || err);
+      // fallback to mock sample if picker fails in restricted web environments
+      await handleSelectSample('https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=1200');
+    }
+  };
+
+  const handleTakePhoto = async () => {
+    try {
+      const permissionResult = await ImagePicker.requestCameraPermissionsAsync();
+      if (!permissionResult.granted) {
+        Alert.alert('Permission Required', 'Permission to access camera is required to take photos.');
+        return;
+      }
+
+      const result = await ImagePicker.launchCameraAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        quality: 1,
+      });
+
+      if (!result.canceled && result.assets && result.assets.length > 0) {
+        await handleSelectSample(result.assets[0].uri);
+      }
+    } catch (err: any) {
+      console.warn('Camera launcher error:', err?.message || err);
+      await handleSelectSample('https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=1200');
+    }
+  };
+
   return (
     <View style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
@@ -52,7 +98,7 @@ export default function UploadScreen() {
         {/* Drag & Drop / Tap Dropzone */}
         <TouchableOpacity
           activeOpacity={0.85}
-          onPress={() => handleSelectSample('https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=1200')}
+          onPress={handlePickImage}
           style={[styles.dropzone, shadows.sm]}
         >
           <View style={styles.dropIconBox}>
@@ -62,7 +108,7 @@ export default function UploadScreen() {
           <Text style={styles.dropSub}>or drag & drop file here (PNG, JPG, RAW)</Text>
           <PrimaryButton
             title="Browse Files"
-            onPress={() => handleSelectSample('https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=1200')}
+            onPress={handlePickImage}
             style={{ marginTop: 16 }}
           />
         </TouchableOpacity>
@@ -70,7 +116,7 @@ export default function UploadScreen() {
         {/* Action Grid */}
         <View style={styles.actionGrid}>
           <TouchableOpacity
-            onPress={() => handleSelectSample('https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=1200')}
+            onPress={handleTakePhoto}
             style={[styles.actionCard, { backgroundColor: '#EEF2FF' }]}
           >
             <Text style={{ fontSize: 28, marginBottom: 8 }}>📸</Text>
@@ -79,7 +125,7 @@ export default function UploadScreen() {
           </TouchableOpacity>
 
           <TouchableOpacity
-            onPress={() => handleSelectSample('https://images.unsplash.com/photo-1552346154-21d32810aba3?w=1200')}
+            onPress={handlePickImage}
             style={[styles.actionCard, { backgroundColor: '#FAF5FF' }]}
           >
             <Text style={{ fontSize: 28, marginBottom: 8 }}>📚</Text>
@@ -117,7 +163,7 @@ export default function UploadScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.secondaryBackground,
+    backgroundColor: colors.background,
   },
   scrollContent: {
     paddingHorizontal: 20,
@@ -148,7 +194,7 @@ const styles = StyleSheet.create({
   },
   dropzone: {
     backgroundColor: '#FFFFFF',
-    borderRadius: radii['2xl'],
+    borderRadius: radii.xl,
     borderWidth: 2,
     borderColor: colors.primary,
     borderStyle: 'dashed',
@@ -183,7 +229,7 @@ const styles = StyleSheet.create({
   },
   actionCard: {
     flex: 1,
-    borderRadius: radii['2xl'],
+    borderRadius: radii.xl,
     padding: 16,
     alignItems: 'center',
   },
@@ -209,7 +255,7 @@ const styles = StyleSheet.create({
   recentItem: {
     width: 80,
     height: 80,
-    borderRadius: radii.xl,
+    borderRadius: radii.lg,
     overflow: 'hidden',
   },
   recentThumb: {
