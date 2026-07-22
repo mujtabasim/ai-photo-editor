@@ -114,10 +114,11 @@ export const editorApi = {
             console.log(`[editorApi.processAITool] Polling attempt ${i + 1}. Job Status: ${job.status}`);
             
             if (job.status === 'COMPLETED') {
-              console.log(`[editorApi.processAITool] Success! outputImageUrl: ${job.outputImageUrl}`);
+              const cacheBusterUrl = `${job.outputImageUrl}?t=${Date.now()}`;
+              console.log(`[editorApi.processAITool] Success! outputImageUrl: ${cacheBusterUrl}`);
               return {
                 success: true,
-                processedImageUrl: job.outputImageUrl,
+                processedImageUrl: cacheBusterUrl,
                 toolUsed: toolId,
                 processingTimeMs: job.processingTimeMs || 1000,
               };

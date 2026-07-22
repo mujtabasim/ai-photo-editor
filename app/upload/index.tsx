@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
@@ -13,10 +13,18 @@ export default function UploadScreen() {
   const router = useRouter();
   const setSelectedImage = useEditorStore((s) => s.setSelectedImage);
 
+  // Task 3: Clear editor store when entering the Upload screen to reset stale state
+  useEffect(() => {
+    console.log('[UploadScreen] Resetting editor state to clear previous session variables.');
+    useEditorStore.getState().clearEditor();
+  }, []);
+
   const handleSelectSample = async (uri: string) => {
     try {
+      console.log(`[UploadScreen] Selected image path: ${uri}. Running upload registration...`);
       const res = await uploadApi.uploadImage(uri);
       if (res.success) {
+        console.log(`[UploadScreen] Upload success. Creating project: ${res.projectId}, originalImageId: ${res.fileId}`);
         useEditorStore.getState().setProject({
           id: res.projectId || `proj_${Date.now()}`,
           title: 'Uploaded Project',
@@ -33,6 +41,7 @@ export default function UploadScreen() {
         });
       }
     } catch (e) {
+      console.warn('[UploadScreen] Upload failed, falling back to local setSelectedImage.', e);
       setSelectedImage(uri);
     }
     router.replace('/editor');
@@ -57,7 +66,6 @@ export default function UploadScreen() {
       }
     } catch (err: any) {
       console.warn('Image picker error:', err?.message || err);
-      // fallback to mock sample if picker fails in restricted web environments
       await handleSelectSample('https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=1200');
     }
   };
