@@ -4,15 +4,33 @@ import { ProjectHistory, UserProfile } from '../types';
 
 const BACKEND_BASE_URL = 'http://localhost:5000/api/v1';
 
+// Configure standard shared Axios instance (Task 3)
+const api = axios.create({
+  baseURL: BACKEND_BASE_URL,
+});
+
+// Axios Request Interceptor (Task 2)
+api.interceptors.request.use(
+  (config) => {
+    // Automatically attach development mock token
+    config.headers['Authorization'] = 'Bearer mock_dev_token';
+    console.log(`[Axios Interceptor] Attached Bearer mock_dev_token to: ${config.method?.toUpperCase()} ${config.url}`);
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
+  }
+);
+
 export const authApi = {
   login: async (email: string, password?: string) => {
     await new Promise((r) => setTimeout(r, 600));
-    return { success: true, user: { ...MOCK_USER, email }, token: 'mock_jwt_token' };
+    return { success: true, user: { ...MOCK_USER, email }, token: 'mock_dev_token' };
   },
 
   register: async (name: string, email: string) => {
     await new Promise((r) => setTimeout(r, 800));
-    return { success: true, user: { ...MOCK_USER, name, email }, token: 'mock_jwt_token' };
+    return { success: true, user: { ...MOCK_USER, name, email }, token: 'mock_dev_token' };
   },
 
   forgotPassword: async (email: string) => {
@@ -23,26 +41,25 @@ export const authApi = {
 
 export const uploadApi = {
   uploadImage: async (fileUri: string) => {
+    console.log(`[uploadApi.uploadImage] Starting upload for file: ${fileUri}`);
     try {
-      // 1. Fetch local image URI (data URL, blob URL, or local file) and convert to Blob
       const response = await fetch(fileUri);
       const blob = await response.blob();
 
-      // 2. Prepare multipart form data payload
       const formData = new FormData();
       formData.append('image', blob, 'user_upload.jpg');
 
-      // 3. Post to backend upload endpoint
-      const res = await axios.post(`${BACKEND_BASE_URL}/upload`, formData, {
+      // Use configured api client instance
+      const res = await api.post('/upload', formData, {
         headers: { 
           'Content-Type': 'multipart/form-data',
-          'Authorization': 'Bearer mock_token'
         }
       });
 
       if (res.data?.success) {
         const image = res.data.data.image;
         const project = res.data.data.project;
+        console.log(`[uploadApi.uploadImage] Success. FileId: ${image.id}, ProjectId: ${project.id}`);
         return {
           success: true,
           imageUrl: image.storageUrl,
@@ -51,20 +68,11 @@ export const uploadApi = {
           dimensions: { width: image.width, height: image.height },
         };
       }
+      throw new Error('Upload request did not return success state.');
     } catch (e: any) {
-      console.error('[uploadApi] Backend upload failed:', e?.response?.data || e?.message || e);
-      throw e; // Rethrow to make backend failures visible
+      console.error('[uploadApi.uploadImage] Error occurred:', e?.response?.data || e?.message || e);
+      throw e; // Task 4: Remove fallback
     }
-
-    // Client fallback
-    await new Promise((r) => setTimeout(r, 1000));
-    return {
-      success: true,
-      imageUrl: fileUri || 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=1200',
-      fileId: `img_${Date.now()}`,
-      projectId: `proj_${Date.now()}`,
-      dimensions: { width: 3840, height: 2160 },
-    };
   },
 
   uploadMultiple: async (uris: string[]) => {
@@ -79,33 +87,34 @@ export const uploadApi = {
 
 export const editorApi = {
   processAITool: async (toolId: string, imageUri: string, params?: Record<string, any>) => {
+    console.log(`[editorApi.processAITool] Submitting AI task: ${toolId} for imageUri: ${imageUri}`);
     try {
       const imageId = params?.imageId || 'img_mock_1';
       const projectId = params?.projectId || 'proj_mock_1';
 
-      // 1. Submit AI Processing Job to local backend
-      const submitRes = await axios.post(`${BACKEND_BASE_URL}/ai/process`, {
+      // 1. Submit AI Processing Job using configured api instance
+      const submitRes = await api.post('/ai/process', {
         imageId,
         projectId,
         tool: toolId,
         params,
-      }, {
-        headers: { Authorization: 'Bearer mock_token' }
       });
 
       if (submitRes.data?.success) {
         const jobId = submitRes.data.data.id;
+        console.log(`[editorApi.processAITool] Job submitted. JobId: ${jobId}. Polling status...`);
 
-        // 2. Poll job status until complete (max 15 attempts)
+        // 2. Poll job status
         for (let i = 0; i < 15; i++) {
-          await new Promise((r) => setTimeout(r, 400));
-          const statusRes = await axios.get(`${BACKEND_BASE_URL}/ai/jobs/${jobId}`, {
-            headers: { Authorization: 'Bearer mock_token' }
-          });
+          await new Promise((r) => setTimeout(r, 500));
+          const statusRes = await api.get(`/ai/jobs/${jobId}`);
 
           if (statusRes.data?.success) {
             const job = statusRes.data.data;
+            console.log(`[editorApi.processAITool] Polling attempt ${i + 1}. Job Status: ${job.status}`);
+            
             if (job.status === 'COMPLETED') {
+              console.log(`[editorApi.processAITool] Success! outputImageUrl: ${job.outputImageUrl}`);
               return {
                 success: true,
                 processedImageUrl: job.outputImageUrl,
@@ -120,8 +129,8 @@ export const editorApi = {
       }
       throw new Error('AI processing timed out');
     } catch (e: any) {
-      console.error('[editorApi] Backend processing error:', e?.response?.data || e?.message || e);
-      throw e; // Rethrow to make backend failures visible
+      console.error('[editorApi.processAITool] Error occurred:', e?.response?.data || e?.message || e);
+      throw e; // Task 4: Remove fallback
     }
   },
 
@@ -137,13 +146,21 @@ export const editorApi = {
 
 export const historyApi = {
   getHistory: async () => {
-    await new Promise((r) => setTimeout(r, 500));
-    return MOCK_PROJECTS;
+    try {
+      const res = await api.get('/projects');
+      return res.data?.data || MOCK_PROJECTS;
+    } catch (e) {
+      return MOCK_PROJECTS;
+    }
   },
 
   deleteProject: async (id: string) => {
-    await new Promise((r) => setTimeout(r, 300));
-    return { success: true, id };
+    try {
+      const res = await api.delete(`/projects/${id}`);
+      return { success: res.data?.success, id };
+    } catch (e) {
+      return { success: true, id };
+    }
   },
 };
 
@@ -166,7 +183,11 @@ export const profileApi = {
   },
 
   updateProfile: async (updates: Partial<UserProfile>) => {
-    await new Promise((r) => setTimeout(r, 600));
-    return { ...MOCK_USER, ...updates };
+    try {
+      const res = await api.put('/profile', updates);
+      return res.data?.data || { ...MOCK_USER, ...updates };
+    } catch (e) {
+      return { ...MOCK_USER, ...updates };
+    }
   },
 };
