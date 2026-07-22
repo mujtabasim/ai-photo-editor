@@ -117,10 +117,7 @@ export const ConfirmationModal: React.FC<{
             <PrimaryButton
               title={confirmTitle}
               onPress={onConfirm}
-              style={[
-                { flex: 1 },
-                isDestructive && { backgroundColor: colors.error },
-              ]}
+              style={isDestructive ? { flex: 1, backgroundColor: colors.error } : { flex: 1 }}
             />
           </View>
         </View>

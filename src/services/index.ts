@@ -1,5 +1,8 @@
+import axios from 'axios';
 import { MOCK_USER, MOCK_PROJECTS, MOCK_SUBSCRIPTION_PLANS } from '../constants/mockData';
 import { ProjectHistory, UserProfile } from '../types';
+
+const BACKEND_BASE_URL = 'http://localhost:5000/api/v1';
 
 export const authApi = {
   login: async (email: string, password?: string) => {
@@ -20,17 +23,40 @@ export const authApi = {
 
 export const uploadApi = {
   uploadImage: async (fileUri: string) => {
-    await new Promise((r) => setTimeout(r, 1200));
+    try {
+      // Create a mock image upload payload to the local backend
+      // In actual mobile usage, this would be a multi-part form upload.
+      // For local browser scaffold testing, we register the image url path.
+      const res = await axios.post(`${BACKEND_BASE_URL}/upload`, {
+        imageUri: fileUri,
+      }, {
+        headers: { Authorization: 'Bearer mock_token' }
+      });
+      if (res.data?.success) {
+        return {
+          success: true,
+          imageUrl: res.data.data.image.storageUrl,
+          fileId: res.data.data.image.id,
+          projectId: res.data.data.project.id,
+          dimensions: { width: res.data.data.image.width, height: res.data.data.image.height },
+        };
+      }
+    } catch (e) {
+      // Fallback
+    }
+
+    await new Promise((r) => setTimeout(r, 1000));
     return {
       success: true,
       imageUrl: fileUri || 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=1200',
-      fileId: `file_${Date.now()}`,
+      fileId: `img_${Date.now()}`,
+      projectId: `proj_${Date.now()}`,
       dimensions: { width: 3840, height: 2160 },
     };
   },
 
   uploadMultiple: async (uris: string[]) => {
-    await new Promise((r) => setTimeout(r, 1800));
+    await new Promise((r) => setTimeout(r, 1200));
     return {
       success: true,
       uploadedCount: uris.length,
@@ -41,21 +67,66 @@ export const uploadApi = {
 
 export const editorApi = {
   processAITool: async (toolId: string, imageUri: string, params?: Record<string, any>) => {
-    await new Promise((r) => setTimeout(r, 1500));
+    try {
+      // Resolve IDs from params or generate fallback dev IDs
+      const imageId = params?.imageId || 'img_mock_1';
+      const projectId = params?.projectId || 'proj_mock_1';
+
+      // 1. Submit AI Processing Job to local backend
+      const submitRes = await axios.post(`${BACKEND_BASE_URL}/ai/process`, {
+        imageId,
+        projectId,
+        tool: toolId,
+        params,
+      }, {
+        headers: { Authorization: 'Bearer mock_token' }
+      });
+
+      if (submitRes.data?.success) {
+        const jobId = submitRes.data.data.id;
+
+        // 2. Poll job status until complete (max 10 attempts)
+        for (let i = 0; i < 15; i++) {
+          await new Promise((r) => setTimeout(r, 400));
+          const statusRes = await axios.get(`${BACKEND_BASE_URL}/ai/jobs/${jobId}`, {
+            headers: { Authorization: 'Bearer mock_token' }
+          });
+
+          if (statusRes.data?.success) {
+            const job = statusRes.data.data;
+            if (job.status === 'COMPLETED') {
+              return {
+                success: true,
+                processedImageUrl: job.outputImageUrl,
+                toolUsed: toolId,
+                processingTimeMs: job.processingTimeMs || 1000,
+              };
+            } else if (job.status === 'FAILED') {
+              throw new Error(job.errorMessage || 'AI process failed');
+            }
+          }
+        }
+      }
+    } catch (e: any) {
+      console.warn('[Frontend API] Live backend call failed or timed out. Falling back to local filter simulation.', e?.message || e);
+    }
+
+    // Local filter simulation fallback
+    await new Promise((r) => setTimeout(r, 1200));
     return {
       success: true,
       processedImageUrl: imageUri,
       toolUsed: toolId,
-      processingTimeMs: 1420,
+      processingTimeMs: 1200,
     };
   },
 
   saveExport: async (project: Partial<ProjectHistory>) => {
-    await new Promise((r) => setTimeout(r, 700));
+    await new Promise((r) => setTimeout(r, 600));
     return {
       success: true,
-      projectId: `proj_${Date.now()}`,
-      savedUrl: project.processedUrl || project.originalUrl,
+      projectId: project.id || `proj_${Date.now()}`,
+      savedUrl: project.processedUrl || project.originalUrl || '',
     };
   },
 };

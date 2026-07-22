@@ -7,6 +7,7 @@ import { PrimaryButton } from '../../src/components/ui/Buttons';
 import { LoadingOverlay } from '../../src/components/ui/Feedback';
 import { useEditorStore } from '../../src/store/useEditorStore';
 import { useHaptics } from '../../src/hooks/useHaptics';
+import { editorApi } from '../../src/services';
 
 const { width, height } = Dimensions.get('window');
 
@@ -18,13 +19,24 @@ export default function EditorScreen() {
   const [activeDockTab, setActiveDockTab] = useState<'tools' | 'adjust' | 'layers' | 'history'>('tools');
   const [exportModal, setExportModal] = useState(false);
 
-  const handleRunAI = () => {
+  const handleRunAI = async () => {
+    if (!activeTool || !selectedImageUri) return;
     lightImpact();
     setProcessing(true);
-    setTimeout(() => {
+    try {
+      const res = await editorApi.processAITool(activeTool, selectedImageUri, {
+        imageId: currentProject?.id || 'img_mock_1',
+        projectId: currentProject?.id || 'proj_mock_1',
+      });
+      if (res.success && res.processedImageUrl) {
+        useEditorStore.getState().setSelectedImage(res.processedImageUrl);
+        notificationSuccess();
+      }
+    } catch (e) {
+      console.warn('AI process run error:', e);
+    } finally {
       setProcessing(false);
-      notificationSuccess();
-    }, 1500);
+    }
   };
 
   const imageSource = selectedImageUri || 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=1200';

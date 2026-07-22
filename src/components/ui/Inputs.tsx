@@ -40,7 +40,7 @@ export const FormInput: React.FC<{
     <View style={styles.formContainer}>
       <Text style={styles.formLabel}>{label}</Text>
       <TextInput
-        style={[styles.formInput, error && styles.inputError]}
+        style={error ? [styles.formInput, styles.inputError] : styles.formInput}
         value={value}
         onChangeText={onChangeText}
         placeholder={placeholder}
