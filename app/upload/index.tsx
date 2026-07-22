@@ -7,12 +7,33 @@ import { GlassCard } from '../../src/components/ui/Cards';
 import { useEditorStore } from '../../src/store/useEditorStore';
 import { MOCK_PROJECTS } from '../../src/constants/mockData';
 
+import { uploadApi } from '../../src/services';
+
 export default function UploadScreen() {
   const router = useRouter();
   const setSelectedImage = useEditorStore((s) => s.setSelectedImage);
 
-  const handleSelectSample = (uri: string) => {
-    setSelectedImage(uri);
+  const handleSelectSample = async (uri: string) => {
+    try {
+      const res = await uploadApi.uploadImage(uri);
+      if (res.success) {
+        useEditorStore.getState().setProject({
+          id: res.projectId || `proj_${Date.now()}`,
+          title: 'Uploaded Project',
+          originalUrl: res.imageUrl,
+          processedUrl: res.imageUrl,
+          thumbnailUrl: res.imageUrl,
+          toolUsed: 'Original',
+          createdAt: 'Just now',
+          status: 'completed',
+          isFavorite: false,
+          fileSize: '3.4 MB',
+          dimensions: res.dimensions || { width: 1920, height: 1080 },
+        });
+      }
+    } catch (e) {
+      setSelectedImage(uri);
+    }
     router.replace('/editor');
   };
 
