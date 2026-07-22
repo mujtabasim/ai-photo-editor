@@ -52,10 +52,11 @@ export const uploadApi = {
         };
       }
     } catch (e: any) {
-      console.warn('[uploadApi] Multipart file upload to backend failed. Using local client fallback.', e?.message || e);
+      console.error('[uploadApi] Backend upload failed:', e?.response?.data || e?.message || e);
+      throw e; // Rethrow to make backend failures visible
     }
 
-    // Client fallback if backend is offline
+    // Client fallback
     await new Promise((r) => setTimeout(r, 1000));
     return {
       success: true,
@@ -117,18 +118,11 @@ export const editorApi = {
           }
         }
       }
+      throw new Error('AI processing timed out');
     } catch (e: any) {
-      console.warn('[Frontend API] Live backend call failed or timed out. Falling back to local filter simulation.', e?.message || e);
+      console.error('[editorApi] Backend processing error:', e?.response?.data || e?.message || e);
+      throw e; // Rethrow to make backend failures visible
     }
-
-    // Local filter simulation fallback
-    await new Promise((r) => setTimeout(r, 1200));
-    return {
-      success: true,
-      processedImageUrl: imageUri,
-      toolUsed: toolId,
-      processingTimeMs: 1200,
-    };
   },
 
   saveExport: async (project: Partial<ProjectHistory>) => {
