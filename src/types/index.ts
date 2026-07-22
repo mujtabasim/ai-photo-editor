@@ -27,6 +27,7 @@ export interface ProjectHistory {
   title: string;
   thumbnailUrl: string;
   originalUrl: string;
+  originalImageId?: string;
   processedUrl?: string;
   toolUsed: string;
   createdAt: string;

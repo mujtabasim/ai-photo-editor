@@ -25,7 +25,7 @@ export default function EditorScreen() {
     setProcessing(true);
     try {
       const res = await editorApi.processAITool(activeTool, selectedImageUri, {
-        imageId: currentProject?.id || 'img_mock_1',
+        imageId: currentProject?.originalImageId || 'img_mock_1',
         projectId: currentProject?.id || 'proj_mock_1',
       });
       if (res.success && res.processedImageUrl) {

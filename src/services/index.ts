@@ -24,27 +24,38 @@ export const authApi = {
 export const uploadApi = {
   uploadImage: async (fileUri: string) => {
     try {
-      // Create a mock image upload payload to the local backend
-      // In actual mobile usage, this would be a multi-part form upload.
-      // For local browser scaffold testing, we register the image url path.
-      const res = await axios.post(`${BACKEND_BASE_URL}/upload`, {
-        imageUri: fileUri,
-      }, {
-        headers: { Authorization: 'Bearer mock_token' }
+      // 1. Fetch local image URI (data URL, blob URL, or local file) and convert to Blob
+      const response = await fetch(fileUri);
+      const blob = await response.blob();
+
+      // 2. Prepare multipart form data payload
+      const formData = new FormData();
+      formData.append('image', blob, 'user_upload.jpg');
+
+      // 3. Post to backend upload endpoint
+      const res = await axios.post(`${BACKEND_BASE_URL}/upload`, formData, {
+        headers: { 
+          'Content-Type': 'multipart/form-data',
+          'Authorization': 'Bearer mock_token'
+        }
       });
+
       if (res.data?.success) {
+        const image = res.data.data.image;
+        const project = res.data.data.project;
         return {
           success: true,
-          imageUrl: res.data.data.image.storageUrl,
-          fileId: res.data.data.image.id,
-          projectId: res.data.data.project.id,
-          dimensions: { width: res.data.data.image.width, height: res.data.data.image.height },
+          imageUrl: image.storageUrl,
+          fileId: image.id,
+          projectId: project.id,
+          dimensions: { width: image.width, height: image.height },
         };
       }
-    } catch (e) {
-      // Fallback
+    } catch (e: any) {
+      console.warn('[uploadApi] Multipart file upload to backend failed. Using local client fallback.', e?.message || e);
     }
 
+    // Client fallback if backend is offline
     await new Promise((r) => setTimeout(r, 1000));
     return {
       success: true,
@@ -68,7 +79,6 @@ export const uploadApi = {
 export const editorApi = {
   processAITool: async (toolId: string, imageUri: string, params?: Record<string, any>) => {
     try {
-      // Resolve IDs from params or generate fallback dev IDs
       const imageId = params?.imageId || 'img_mock_1';
       const projectId = params?.projectId || 'proj_mock_1';
 
@@ -85,7 +95,7 @@ export const editorApi = {
       if (submitRes.data?.success) {
         const jobId = submitRes.data.data.id;
 
-        // 2. Poll job status until complete (max 10 attempts)
+        // 2. Poll job status until complete (max 15 attempts)
         for (let i = 0; i < 15; i++) {
           await new Promise((r) => setTimeout(r, 400));
           const statusRes = await axios.get(`${BACKEND_BASE_URL}/ai/jobs/${jobId}`, {

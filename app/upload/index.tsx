@@ -23,6 +23,7 @@ export default function UploadScreen() {
           originalUrl: res.imageUrl,
           processedUrl: res.imageUrl,
           thumbnailUrl: res.imageUrl,
+          originalImageId: res.fileId,
           toolUsed: 'Original',
           createdAt: 'Just now',
           status: 'completed',
