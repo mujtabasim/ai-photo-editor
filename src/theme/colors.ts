@@ -1,72 +1,72 @@
 export const colors = {
-  primary: '#5B5FEF',
-  primaryLight: '#8184F8',
-  primaryDark: '#4347C9',
-  accent: '#7C4DFF',
-  accentLight: '#A482FF',
+  primary: '#6b38d4',            // Lumina Purple
+  primaryLight: '#8455ef',       // Lumina Purple Container
+  primaryDark: '#5516be',
+  accent: '#0058be',             // Lumina Secondary Blue
+  accentLight: '#2170e4',
   success: '#22C55E',
-  warning: '#F59E0B',
-  error: '#EF4444',
-  background: '#FFFFFF',
-  secondaryBackground: '#F8FAFC',
-  card: '#FFFFFF',
-  cardDark: '#0F172A',
-  border: '#E5E7EB',
-  borderLight: '#F1F5F9',
-  textPrimary: '#0F172A',
-  textSecondary: '#64748B',
-  textMuted: '#94A3B8',
-  textWhite: '#FFFFFF',
-  glassBackground: 'rgba(255, 255, 255, 0.75)',
-  glassBorder: 'rgba(255, 255, 255, 0.4)',
-  glassDarkBackground: 'rgba(15, 23, 42, 0.85)',
+  warning: '#a76500',            // Lumina Tertiary Orange/Gold
+  error: '#ba1a1a',              // Lumina Error Red
+  background: '#fef7ff',         // Lumina Background
+  secondaryBackground: '#f3ebf8',// Lumina Container Background
+  card: '#ffffff',
+  cardDark: '#1d1a23',
+  border: '#cbc3d7',             // Lumina Outline Variant
+  borderLight: '#ede5f3',        // Lumina Surface Container High
+  textPrimary: '#1d1a23',        // Lumina On-Surface
+  textSecondary: '#494454',      // Lumina On-Surface Variant
+  textMuted: '#7b7486',          // Lumina Outline
+  textWhite: '#ffffff',
+  glassBackground: 'rgba(254, 247, 255, 0.82)',
+  glassBorder: 'rgba(255, 255, 255, 0.5)',
+  glassDarkBackground: 'rgba(29, 26, 35, 0.88)',
   gradients: {
-    primary: ['#5B5FEF', '#7C4DFF'],
-    accent: ['#7C4DFF', '#C084FC'],
+    primary: ['#6b38d4', '#2170e4'], // Lumina Spectrum: Purple to Electric Blue
+    accent: ['#8455ef', '#a76500'],
     emerald: ['#10B981', '#059669'],
-    sunset: ['#FF6B6B', '#FF8E53'],
-    ocean: ['#00C6FF', '#0072FF'],
-    cyber: ['#8A2387', '#E94057', '#F27121'],
-    gold: ['#F59E0B', '#D97706'],
-    glass: ['rgba(255, 255, 255, 0.8)', 'rgba(255, 255, 255, 0.4)'],
+    sunset: ['#FF6B6B', '#a76500'],
+    ocean: ['#0058be', '#2170e4'],
+    cyber: ['#8455ef', '#ba1a1a', '#a76500'],
+    gold: ['#a76500', '#855000'],
+    glass: ['rgba(254, 247, 255, 0.85)', 'rgba(254, 247, 255, 0.5)'],
   }
 };
 
 export const radii = {
-  sm: 8,
+  sm: 4,
   md: 12,
   lg: 16,
-  xl: 20,
-  '2xl': 24,
+  xl: 24,
+  '2xl': 24, // Matches primary radius (24px)
   full: 9999,
 };
 
 export const shadows = {
   sm: {
-    shadowColor: '#0F172A',
+    shadowColor: '#1d1a23',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.04,
     shadowRadius: 4,
     elevation: 2,
   },
   md: {
-    shadowColor: '#5B5FEF',
+    shadowColor: '#6b38d4',
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.08,
+    shadowOpacity: 0.06,
     shadowRadius: 12,
     elevation: 4,
   },
   lg: {
-    shadowColor: '#0F172A',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.12,
+    shadowColor: '#1d1a23',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.08,
     shadowRadius: 24,
     elevation: 8,
   },
   glow: {
-    shadowColor: '#5B5FEF',
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.25,
+    shadowColor: '#6b38d4',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.22,
     shadowRadius: 16,
     elevation: 10,
   }
