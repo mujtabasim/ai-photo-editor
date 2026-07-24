@@ -1,92 +1,19 @@
 import { ProjectHistory, UserProfile, SubscriptionPlan } from '../types';
 
 export const MOCK_USER: UserProfile = {
-  id: 'usr_8921',
-  name: 'Alex Rivera',
-  email: 'alex.rivera@example.com',
-  avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&auto=format&fit=crop&q=80',
-  plan: 'pro',
-  storageUsedMB: 1420,
-  storageLimitMB: 5000,
-  referralCode: 'ALEX-AI-2026',
-  totalExports: 184,
-  joinedDate: 'January 2026',
+  id: 'usr_guest',
+  name: 'Guest User',
+  email: 'Sign in to save projects',
+  avatarUrl: '',
+  plan: 'free',
+  storageUsedMB: 0,
+  storageLimitMB: 1000,
+  referralCode: '',
+  totalExports: 0,
+  joinedDate: '2026',
 };
 
-export const MOCK_PROJECTS: ProjectHistory[] = [
-  {
-    id: 'proj_1',
-    title: 'Neon Sunset Cyberpunk',
-    thumbnailUrl: 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=500&auto=format&fit=crop&q=80',
-    originalUrl: 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=1200',
-    toolUsed: 'Background Remover',
-    createdAt: '10 mins ago',
-    status: 'completed',
-    isFavorite: true,
-    fileSize: '4.2 MB',
-    dimensions: { width: 3840, height: 2160 },
-  },
-  {
-    id: 'proj_2',
-    title: 'Studio Portrait Enhancement',
-    thumbnailUrl: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=500&auto=format&fit=crop&q=80',
-    originalUrl: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=1200',
-    toolUsed: 'Portrait Enhance',
-    createdAt: '2 hours ago',
-    status: 'completed',
-    isFavorite: true,
-    fileSize: '6.8 MB',
-    dimensions: { width: 4000, height: 3000 },
-  },
-  {
-    id: 'proj_3',
-    title: 'Luxury Sneaker Product Shot',
-    thumbnailUrl: 'https://images.unsplash.com/photo-1552346154-21d32810aba3?w=500&auto=format&fit=crop&q=80',
-    originalUrl: 'https://images.unsplash.com/photo-1552346154-21d32810aba3?w=1200',
-    toolUsed: 'Product Studio AI',
-    createdAt: 'Yesterday',
-    status: 'completed',
-    isFavorite: false,
-    fileSize: '3.1 MB',
-    dimensions: { width: 2400, height: 2400 },
-  },
-  {
-    id: 'proj_4',
-    title: 'Architectural Landscape Upscale',
-    thumbnailUrl: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=500&auto=format&fit=crop&q=80',
-    originalUrl: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=1200',
-    toolUsed: 'AI Upscale 4K',
-    createdAt: '3 days ago',
-    status: 'completed',
-    isFavorite: false,
-    fileSize: '12.4 MB',
-    dimensions: { width: 7680, height: 4320 },
-  },
-  {
-    id: 'proj_5',
-    title: 'Vintage Family Restoration',
-    thumbnailUrl: 'https://images.unsplash.com/photo-1492691527719-9d1e07e534b4?w=500&auto=format&fit=crop&q=80',
-    originalUrl: 'https://images.unsplash.com/photo-1492691527719-9d1e07e534b4?w=1200',
-    toolUsed: 'Old Photo Restore',
-    createdAt: 'July 18, 2026',
-    status: 'completed',
-    isFavorite: true,
-    fileSize: '5.6 MB',
-    dimensions: { width: 3200, height: 2400 },
-  },
-  {
-    id: 'proj_6',
-    title: 'Golden Hour Sky Swap',
-    thumbnailUrl: 'https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?w=500&auto=format&fit=crop&q=80',
-    originalUrl: 'https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?w=1200',
-    toolUsed: 'Sky Replacement',
-    createdAt: 'July 14, 2026',
-    status: 'completed',
-    isFavorite: false,
-    fileSize: '7.9 MB',
-    dimensions: { width: 3600, height: 2400 },
-  }
-];
+export const MOCK_PROJECTS: ProjectHistory[] = [];
 
 export const MOCK_SUBSCRIPTION_PLANS: SubscriptionPlan[] = [
   {
@@ -96,12 +23,10 @@ export const MOCK_SUBSCRIPTION_PLANS: SubscriptionPlan[] = [
     priceYearly: 12.99 * 12,
     savingsPercentage: 0,
     features: [
-      'Unlimited 4K AI Upscaling',
-      'Instant Background Remover',
-      'Batch Export (Up to 50 photos)',
-      'High Priority AI Queue',
-      '50 GB Cloud Storage',
-      'Commercial License Rights',
+      'Full HD & 4K AI Processing',
+      'Background Removal & Object Eraser',
+      'Unlimited Image Exports',
+      'Fast AI Queue Processing',
     ],
   },
   {
@@ -113,46 +38,10 @@ export const MOCK_SUBSCRIPTION_PLANS: SubscriptionPlan[] = [
     isPopular: true,
     features: [
       'Everything in Pro Monthly',
-      'Save 46% compared to monthly',
-      'Early access to Generative Fill',
-      'Uncompressed RAW exports',
-      '24/7 VIP Customer Support',
-      'Unlimited Cloud Storage',
+      'Best Value Annual Subscription',
+      'Priority Cloud Processing',
     ],
   }
 ];
 
-export const MOCK_EXPLORE_TEMPLATES = [
-  {
-    id: 'tpl_1',
-    title: 'Cyberpunk Neon Glow',
-    author: 'Elena Rostova',
-    likes: '14.2k',
-    imageUrl: 'https://images.unsplash.com/photo-1509198397868-475647b2a1e5?w=600&auto=format&fit=crop&q=80',
-    tag: 'Trending',
-  },
-  {
-    id: 'tpl_2',
-    title: 'Vogue Magazine Cover Art',
-    author: 'Marcus Vance',
-    likes: '9.8k',
-    imageUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=600&auto=format&fit=crop&q=80',
-    tag: 'Fashion',
-  },
-  {
-    id: 'tpl_3',
-    title: 'Studio Product Backdrop',
-    author: 'Studio Craft',
-    likes: '22.1k',
-    imageUrl: 'https://images.unsplash.com/photo-1526170375885-4d8ecf77b99f?w=600&auto=format&fit=crop&q=80',
-    tag: 'Ecommerce',
-  },
-  {
-    id: 'tpl_4',
-    title: 'Anime Shinkai Sky Aesthetic',
-    author: 'Kaito Studio',
-    likes: '31.5k',
-    imageUrl: 'https://images.unsplash.com/photo-1513836279014-a89f7a76ae86?w=600&auto=format&fit=crop&q=80',
-    tag: 'Anime',
-  }
-];
+export const MOCK_EXPLORE_TEMPLATES: Array<{ id: string; title: string; author: string; likes: string; imageUrl: string; tag: string }> = [];

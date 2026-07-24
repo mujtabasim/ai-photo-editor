@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, FlatList, Image, TouchableOpacity } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, FlatList, Image, TouchableOpacity, RefreshControl } from 'react-native';
 import { useRouter } from 'expo-router';
+import { Star, Clock, Trash2, Edit3 } from 'lucide-react-native';
 import { colors, radii, shadows } from '../../src/theme/colors';
 import { SearchBar } from '../../src/components/ui/Inputs';
 import { EmptyState, ConfirmationModal } from '../../src/components/ui/Feedback';
@@ -8,14 +9,23 @@ import { useHistoryStore } from '../../src/store/useHistoryStore';
 import { useEditorStore } from '../../src/store/useEditorStore';
 import { ProjectHistory } from '../../src/types';
 import { useHaptics } from '../../src/hooks/useHaptics';
+import { useAuth } from '../../src/hooks/useAuth';
 
 export default function HistoryScreen() {
   const router = useRouter();
   const { lightImpact } = useHaptics();
-  const { projects, searchQuery, setSearchQuery, toggleFavorite, deleteProject, filterFavoriteOnly, setFilterFavoriteOnly } = useHistoryStore();
+  const { projects, loading, searchQuery, setSearchQuery, toggleFavorite, deleteProject, filterFavoriteOnly, setFilterFavoriteOnly, fetchProjects } = useHistoryStore();
   const setProject = useEditorStore((s) => s.setProject);
 
+  const { user } = useAuth();
   const [deleteId, setDeleteId] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (user?.id) {
+      console.log(`[HistoryScreen] Fetching history projects for user_id: ${user.id}`);
+      fetchProjects();
+    }
+  }, [user?.id]);
 
   const filteredProjects = projects.filter((p) => {
     const matchesSearch = p.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -27,7 +37,7 @@ export default function HistoryScreen() {
   const handleOpenProject = (project: ProjectHistory) => {
     lightImpact();
     setProject(project);
-    router.push('/editor');
+    router.push({ pathname: '/editor', params: { projectId: project.id } });
   };
 
   return (
@@ -53,9 +63,10 @@ export default function HistoryScreen() {
 
         <TouchableOpacity
           onPress={() => setFilterFavoriteOnly(true)}
-          style={[styles.filterChip, filterFavoriteOnly && styles.filterChipActive]}
+          style={[styles.filterChip, filterFavoriteOnly && styles.filterChipActive, styles.favChipRow]}
         >
-          <Text style={[styles.filterText, filterFavoriteOnly && styles.filterTextActive]}>⭐ Favorites</Text>
+          <Star size={13} color={filterFavoriteOnly ? '#FFFFFF' : colors.textSecondary} fill={filterFavoriteOnly ? '#FFFFFF' : 'none'} />
+          <Text style={[styles.filterText, filterFavoriteOnly && styles.filterTextActive]}>Favorites</Text>
         </TouchableOpacity>
       </View>
 
@@ -72,19 +83,26 @@ export default function HistoryScreen() {
           keyExtractor={(item) => item.id}
           contentContainerStyle={styles.listContent}
           showsVerticalScrollIndicator={false}
+          refreshControl={
+            <RefreshControl refreshing={loading} onRefresh={fetchProjects} colors={[colors.primary]} />
+          }
           renderItem={({ item }) => (
             <TouchableOpacity
               activeOpacity={0.9}
               onPress={() => handleOpenProject(item)}
               style={[styles.card, shadows.sm]}
             >
-              <Image source={{ uri: item.thumbnailUrl }} style={styles.thumb} />
+              <Image source={{ uri: item.processedUrl || item.thumbnailUrl || item.originalUrl }} style={styles.thumb} />
               
               <View style={styles.infoCol}>
                 <View style={styles.titleRow}>
                   <Text style={styles.cardTitle} numberOfLines={1}>{item.title}</Text>
                   <TouchableOpacity onPress={() => toggleFavorite(item.id)}>
-                    <Text style={{ fontSize: 16 }}>{item.isFavorite ? '⭐' : '☆'}</Text>
+                    <Star
+                      size={18}
+                      color={item.isFavorite ? colors.warning : colors.textMuted}
+                      fill={item.isFavorite ? colors.warning : 'none'}
+                    />
                   </TouchableOpacity>
                 </View>
 
@@ -138,7 +156,7 @@ export default function HistoryScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.secondaryBackground,
+    backgroundColor: colors.background,
     paddingHorizontal: 20,
     paddingTop: 60,
   },
@@ -146,7 +164,7 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   title: {
-    fontSize: 24,
+    fontSize: 26,
     fontWeight: '800',
     color: colors.textPrimary,
   },
@@ -164,10 +182,18 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: radii.full,
-    backgroundColor: '#E2E8F0',
+    backgroundColor: '#F4F4F8',
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  favChipRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
   },
   filterChipActive: {
     backgroundColor: colors.primary,
+    borderColor: colors.primary,
   },
   filterText: {
     fontSize: 13,
@@ -176,6 +202,7 @@ const styles = StyleSheet.create({
   },
   filterTextActive: {
     color: '#FFFFFF',
+    fontWeight: '700',
   },
   listContent: {
     paddingBottom: 110,
@@ -188,7 +215,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: 12,
     borderWidth: 1,
-    borderColor: colors.borderLight,
+    borderColor: colors.border,
   },
   thumb: {
     width: 96,
@@ -234,7 +261,7 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   actionBtn: {
-    backgroundColor: '#EEF2FF',
+    backgroundColor: '#F5F3FF',
     paddingHorizontal: 14,
     paddingVertical: 4,
     borderRadius: radii.md,

@@ -26,15 +26,21 @@ export interface ProjectHistory {
   id: string;
   title: string;
   thumbnailUrl: string;
+  thumbnail_url?: string;
   originalUrl: string;
+  original_url?: string;
   originalImageId?: string;
   processedUrl?: string;
+  processed_url?: string;
   toolUsed: string;
+  tool_used?: string;
   createdAt: string;
-  status: ProcessingStatus;
+  created_at?: string;
+  status?: ProcessingStatus;
   isFavorite: boolean;
-  fileSize: string;
-  dimensions: { width: number; height: number };
+  is_favorite?: boolean;
+  fileSize?: string;
+  dimensions?: { width: number; height: number };
 }
 
 export interface UserProfile {
@@ -60,15 +66,6 @@ export interface SubscriptionPlan {
   features: string[];
 }
 
-export interface Layer {
-  id: string;
-  name: string;
-  type: 'image' | 'text' | 'ai_mask' | 'adjustment';
-  isVisible: boolean;
-  isLocked: boolean;
-  opacity: number;
-}
-
 export interface AdjustmentState {
   brightness: number;
   contrast: number;
@@ -82,13 +79,19 @@ export interface AdjustmentState {
   tint: number;
 }
 
+export interface EditorSnapshot {
+  imageUri: string | null;
+  adjustments: AdjustmentState;
+  activeTool: string | null;
+  timestamp: number;
+}
+
 export interface EditorState {
   currentProject: ProjectHistory | null;
   selectedImageUri: string | null;
   activeTool: string | null;
   adjustments: AdjustmentState;
-  layers: Layer[];
-  history: Array<{ timestamp: number; action: string }>;
+  history: EditorSnapshot[];
   historyIndex: number;
   zoomScale: number;
   isProcessing: boolean;

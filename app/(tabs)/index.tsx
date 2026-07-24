@@ -1,14 +1,14 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, Image, TouchableOpacity, Dimensions } from 'react-native';
 import { useRouter } from 'expo-router';
+import { Bell, Settings, Upload, Camera, Sparkles, ChevronRight, FolderOpen, User } from 'lucide-react-native';
 import { colors, radii, shadows } from '../../src/theme/colors';
 import { SearchBar, Chip } from '../../src/components/ui/Inputs';
-import { FeatureCard, GlassCard } from '../../src/components/ui/Cards';
-import { PrimaryButton, SecondaryButton } from '../../src/components/ui/Buttons';
-import { MOCK_USER, MOCK_PROJECTS } from '../../src/constants/mockData';
+import { FeatureCard } from '../../src/components/ui/Cards';
 import { AI_TOOLS_LIST } from '../../src/constants/aiTools';
-
-const { width } = Dimensions.get('window');
+import { useHistoryStore } from '../../src/store/useHistoryStore';
+import { useEditorStore } from '../../src/store/useEditorStore';
+import { useAuth } from '../../src/hooks/useAuth';
 
 const CATEGORIES = [
   'Remove Background',
@@ -23,6 +23,19 @@ export default function HomeScreen() {
   const router = useRouter();
   const [search, setSearch] = useState('');
   const [selectedCat, setSelectedCat] = useState('Remove Background');
+  const { projects, fetchProjects } = useHistoryStore();
+  const setProject = useEditorStore((s) => s.setProject);
+  const { user, profile } = useAuth();
+
+  useEffect(() => {
+    if (user?.id) {
+      console.log(`[HomeScreen] Loading projects for user_id: ${user.id}`);
+      fetchProjects();
+    }
+  }, [user?.id]);
+
+  const greetingName = profile?.display_name || user?.user_metadata?.display_name || user?.email?.split('@')[0] || 'Creative';
+  const userAvatar = profile?.avatar_url;
 
   return (
     <View style={styles.container}>
@@ -30,20 +43,23 @@ export default function HomeScreen() {
       <View style={styles.header}>
         <View style={styles.userInfo}>
           <TouchableOpacity onPress={() => router.push('/(tabs)/profile')} style={styles.avatarFrame}>
-            <Image source={{ uri: MOCK_USER.avatarUrl }} style={styles.avatar} />
+            {userAvatar ? (
+              <Image source={{ uri: userAvatar }} style={styles.avatar} />
+            ) : (
+              <View style={styles.avatarPlaceholder}>
+                <User size={20} color={colors.primary} />
+              </View>
+            )}
           </TouchableOpacity>
           <View>
-            <Text style={styles.greetingText}>Hi, Creative</Text>
-            <Text style={styles.subtitleText}>Lumina AI Studio</Text>
+            <Text style={styles.greetingText}>Hi, {greetingName}</Text>
+            <Text style={styles.subtitleText}>{user?.email || 'AI Photo Editor'}</Text>
           </View>
         </View>
 
         <View style={styles.headerActions}>
-          <TouchableOpacity onPress={() => router.push('/settings')} style={styles.iconButton}>
-            <Text style={styles.headerIcon}>🔔</Text>
-          </TouchableOpacity>
-          <TouchableOpacity onPress={() => router.push('/settings')} style={styles.iconButton}>
-            <Text style={styles.headerIcon}>⚙️</Text>
+          <TouchableOpacity onPress={() => router.push('/settings')} style={styles.glassIconButton}>
+            <Settings size={18} color={colors.textPrimary} />
           </TouchableOpacity>
         </View>
       </View>
@@ -75,73 +91,85 @@ export default function HomeScreen() {
           ))}
         </ScrollView>
 
-        {/* Hero Gradient Workspace Card */}
-        <TouchableOpacity
-          activeOpacity={0.9}
-          onPress={() => router.push('/upload')}
-          style={[styles.heroCard, shadows.glow]}
-        >
-          <View style={styles.heroOverlay}>
-            <View style={styles.glassBadge}>
-              <Text style={styles.glassBadgeText}>✨ Auto Awesome</Text>
-            </View>
-            <Text style={styles.heroTitle}>Create Something Amazing</Text>
-            <Text style={styles.heroSubtitle}>Upload a photo and let AI transform it.</Text>
+        {/* Hero Section */}
+        <View style={[styles.heroContainer, shadows.sm]}>
+          <View style={styles.heroMainCol}>
+            <Text style={styles.heroTitle}>Transform Photos with AI</Text>
+            <Text style={styles.heroSubtitle}>Upload an image to start editing with AI tools.</Text>
             
             <View style={styles.heroBtnRow}>
               <TouchableOpacity
+                activeOpacity={0.88}
                 onPress={() => router.push('/upload')}
-                style={styles.whiteBtn}
+                style={styles.primaryActionBtn}
               >
-                <Text style={styles.whiteBtnText}>📤 Upload</Text>
+                <Upload size={16} color="#FFFFFF" />
+                <Text style={styles.primaryActionBtnText}>Upload Photo</Text>
               </TouchableOpacity>
 
               <TouchableOpacity
+                activeOpacity={0.88}
                 onPress={() => router.push('/upload')}
-                style={styles.glassDarkBtn}
+                style={styles.secondaryActionBtn}
               >
-                <Text style={styles.glassDarkBtnText}>📸 Camera</Text>
+                <Camera size={16} color={colors.textPrimary} />
+                <Text style={styles.secondaryActionBtnText}>Open Camera</Text>
               </TouchableOpacity>
             </View>
           </View>
-        </TouchableOpacity>
+        </View>
 
         {/* Continue Editing Section */}
         <View style={styles.sectionHeaderRow}>
           <Text style={styles.sectionTitle}>Continue Editing</Text>
-          <TouchableOpacity onPress={() => router.push('/(tabs)/history')}>
-            <Text style={styles.seeAllText}>View All</Text>
-          </TouchableOpacity>
+          {projects.length > 0 && (
+            <TouchableOpacity onPress={() => router.push('/(tabs)/history')} style={styles.seeAllBtn}>
+              <Text style={styles.seeAllText}>View All</Text>
+              <ChevronRight size={14} color={colors.primary} />
+            </TouchableOpacity>
+          )}
         </View>
 
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.recentScroll}>
-          {MOCK_PROJECTS.slice(0, 3).map((proj, idx) => (
-            <TouchableOpacity
-              key={proj.id}
-              activeOpacity={0.88}
-              onPress={() => router.push('/editor')}
-              style={styles.recentCard}
-            >
-              <View style={styles.recentThumbFrame}>
-                <Image source={{ uri: proj.thumbnailUrl }} style={styles.recentThumb} />
-                {/* Progress bar overlay */}
-                <View style={styles.progressBarBg}>
-                  <View style={[styles.progressBarFill, { width: idx === 0 ? '75%' : '40%' }]} />
+        {projects.length === 0 ? (
+          <View style={[styles.emptyProjectsCard, shadows.sm]}>
+            <FolderOpen size={32} color={colors.textMuted} />
+            <Text style={styles.emptyProjectsTitle}>No recent projects</Text>
+            <Text style={styles.emptyProjectsSub}>Your edited images will appear here.</Text>
+          </View>
+        ) : (
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.recentScroll}>
+            {projects.slice(0, 3).map((proj) => (
+              <TouchableOpacity
+                key={proj.id}
+                activeOpacity={0.88}
+                onPress={() => {
+                  setProject(proj);
+                  router.push({ pathname: '/editor', params: { projectId: proj.id } });
+                }}
+                style={[styles.recentCard, shadows.sm]}
+              >
+                <View style={styles.recentThumbFrame}>
+                  <Image source={{ uri: proj.thumbnailUrl }} style={styles.recentThumb} />
+                  <View style={styles.toolTagOverlay}>
+                    <Text style={styles.toolTagText}>{proj.toolUsed}</Text>
+                  </View>
                 </View>
-              </View>
-              <Text style={styles.recentTitle} numberOfLines={1}>{proj.title}</Text>
-              <Text style={styles.recentMeta}>
-                {idx === 0 ? '2m ago • 75% complete' : '1h ago • 40% complete'}
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </ScrollView>
 
-        {/* Trending AI Tools */}
+                <View style={styles.cardInfoContainer}>
+                  <Text style={styles.recentTitle} numberOfLines={1}>{proj.title}</Text>
+                  <Text style={styles.recentMeta}>{proj.createdAt}</Text>
+                </View>
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
+        )}
+
+        {/* AI Tools Grid */}
         <View style={styles.sectionHeaderRow}>
-          <Text style={styles.sectionTitle}>Trending AI Tools</Text>
-          <TouchableOpacity onPress={() => router.push('/ai-tools')}>
+          <Text style={styles.sectionTitle}>AI Tools</Text>
+          <TouchableOpacity onPress={() => router.push('/ai-tools')} style={styles.seeAllBtn}>
             <Text style={styles.seeAllText}>View All</Text>
+            <ChevronRight size={14} color={colors.primary} />
           </TouchableOpacity>
         </View>
 
@@ -151,8 +179,7 @@ export default function HomeScreen() {
               key={tool.id}
               title={tool.name}
               description={tool.description}
-              badge={tool.badgeText}
-              isComingSoon={tool.isComingSoon}
+              iconName={tool.iconName}
               onPress={() => router.push('/editor')}
             />
           ))}
@@ -173,32 +200,39 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     height: 90,
-    backgroundColor: 'rgba(254, 247, 255, 0.92)',
+    backgroundColor: 'rgba(250, 250, 252, 0.92)',
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 20,
     paddingTop: 36,
-    borderBottomWidth: 0.5,
-    borderBottomColor: colors.borderLight,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
     zIndex: 1000,
   },
   userInfo: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 10,
+    gap: 12,
   },
   avatarFrame: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: 42,
+    height: 42,
+    borderRadius: radii.full,
     overflow: 'hidden',
     borderWidth: 1.5,
-    borderColor: 'rgba(107, 56, 212, 0.2)',
+    borderColor: colors.border,
   },
   avatar: {
     width: '100%',
     height: '100%',
+  },
+  avatarPlaceholder: {
+    width: '100%',
+    height: '100%',
+    backgroundColor: '#F5F3FF',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   greetingText: {
     fontSize: 16,
@@ -206,101 +240,93 @@ const styles = StyleSheet.create({
     color: colors.textPrimary,
   },
   subtitleText: {
-    fontSize: 11,
+    fontSize: 12,
     color: colors.textSecondary,
+    fontWeight: '500',
   },
   headerActions: {
     flexDirection: 'row',
     gap: 8,
   },
-  iconButton: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: colors.borderLight,
+  glassIconButton: {
+    width: 40,
+    height: 40,
+    borderRadius: radii.full,
+    backgroundColor: colors.card,
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  headerIcon: {
-    fontSize: 16,
+    borderWidth: 1,
+    borderColor: colors.border,
+    ...shadows.sm,
   },
   scrollContent: {
     paddingHorizontal: 20,
-    paddingTop: 110,
+    paddingTop: 106,
     paddingBottom: 110,
   },
   categoryScroll: {
-    gap: 6,
+    gap: 8,
     marginBottom: 20,
-    paddingBottom: 4,
+    paddingBottom: 2,
   },
-  heroCard: {
-    borderRadius: radii.xl,
-    overflow: 'hidden',
-    marginBottom: 24,
-    backgroundColor: colors.primary,
+  heroContainer: {
+    backgroundColor: '#F5F3FF',
+    borderRadius: radii['2xl'],
+    borderWidth: 1,
+    borderColor: '#EDE9FE',
+    padding: 24,
+    marginBottom: 28,
   },
-  heroOverlay: {
-    padding: 20,
-    backgroundColor: 'transparent',
-  },
-  glassBadge: {
-    backgroundColor: 'rgba(255, 255, 255, 0.25)',
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: radii.full,
-    alignSelf: 'flex-start',
-    marginBottom: 16,
-    borderWidth: 0.5,
-    borderColor: 'rgba(255, 255, 255, 0.3)',
-  },
-  glassBadgeText: {
-    color: '#FFFFFF',
-    fontSize: 11,
-    fontWeight: '700',
+  heroMainCol: {
+    flex: 1,
   },
   heroTitle: {
-    fontSize: 24,
+    fontSize: 22,
     fontWeight: '800',
-    color: '#FFFFFF',
+    color: colors.textPrimary,
     marginBottom: 6,
+    letterSpacing: -0.3,
   },
   heroSubtitle: {
     fontSize: 13,
-    color: 'rgba(255, 255, 255, 0.85)',
+    color: colors.textSecondary,
     marginBottom: 20,
     lineHeight: 18,
+    fontWeight: '400',
   },
   heroBtnRow: {
     flexDirection: 'row',
-    gap: 12,
+    gap: 10,
+    flexWrap: 'wrap',
   },
-  whiteBtn: {
-    backgroundColor: '#FFFFFF',
-    paddingHorizontal: 18,
-    paddingVertical: 8,
+  primaryActionBtn: {
+    backgroundColor: colors.primary,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
     borderRadius: radii.full,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 6,
-    elevation: 3,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    ...shadows.md,
   },
-  whiteBtnText: {
-    color: colors.primary,
+  primaryActionBtnText: {
+    color: '#FFFFFF',
     fontSize: 13,
     fontWeight: '700',
   },
-  glassDarkBtn: {
-    backgroundColor: 'rgba(107, 56, 212, 0.15)',
-    paddingHorizontal: 18,
-    paddingVertical: 8,
+  secondaryActionBtn: {
+    backgroundColor: colors.card,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
     borderRadius: radii.full,
-    borderWidth: 0.5,
-    borderColor: 'rgba(255, 255, 255, 0.25)',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    borderWidth: 1,
+    borderColor: colors.border,
   },
-  glassDarkBtnText: {
-    color: '#FFFFFF',
+  secondaryActionBtnText: {
+    color: colors.textPrimary,
     fontSize: 13,
     fontWeight: '700',
   },
@@ -308,51 +334,85 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: '800',
     color: colors.textPrimary,
+    letterSpacing: -0.2,
   },
   sectionHeaderRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 12,
-    marginTop: 8,
+    marginBottom: 14,
+    marginTop: 4,
+  },
+  seeAllBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 2,
   },
   seeAllText: {
     color: colors.primary,
     fontSize: 13,
     fontWeight: '700',
   },
+  emptyProjectsCard: {
+    backgroundColor: colors.card,
+    borderRadius: radii['2xl'],
+    padding: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 28,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  emptyProjectsTitle: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: colors.textPrimary,
+    marginTop: 8,
+  },
+  emptyProjectsSub: {
+    fontSize: 12,
+    color: colors.textSecondary,
+    marginTop: 2,
+  },
   recentScroll: {
-    gap: 12,
-    marginBottom: 24,
-    paddingBottom: 6,
+    gap: 14,
+    marginBottom: 28,
+    paddingBottom: 4,
   },
   recentCard: {
-    width: 170,
+    width: 175,
+    backgroundColor: colors.card,
+    borderRadius: radii['2xl'],
+    borderWidth: 1,
+    borderColor: colors.border,
+    overflow: 'hidden',
   },
   recentThumbFrame: {
     width: '100%',
-    height: 110,
-    borderRadius: radii.lg,
-    overflow: 'hidden',
+    height: 115,
     position: 'relative',
-    backgroundColor: colors.borderLight,
-    marginBottom: 6,
+    backgroundColor: colors.border,
   },
   recentThumb: {
     width: '100%',
     height: '100%',
   },
-  progressBarBg: {
+  toolTagOverlay: {
     position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    height: 4,
-    backgroundColor: 'rgba(255, 255, 255, 0.4)',
+    top: 8,
+    left: 8,
+    backgroundColor: 'rgba(17, 24, 39, 0.75)',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: radii.full,
   },
-  progressBarFill: {
-    height: '100%',
-    backgroundColor: colors.primary,
+  toolTagText: {
+    color: '#FFFFFF',
+    fontSize: 10,
+    fontWeight: '700',
+  },
+  cardInfoContainer: {
+    padding: 12,
   },
   recentTitle: {
     fontSize: 13,
@@ -360,9 +420,10 @@ const styles = StyleSheet.create({
     color: colors.textPrimary,
   },
   recentMeta: {
-    fontSize: 10,
+    fontSize: 11,
     color: colors.textSecondary,
-    marginTop: 2,
+    marginTop: 3,
+    fontWeight: '500',
   },
   featuredGrid: {
     flexDirection: 'row',

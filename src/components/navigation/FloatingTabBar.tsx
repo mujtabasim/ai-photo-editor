@@ -1,19 +1,28 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { BottomTabBarProps } from '@react-navigation/bottom-tabs';
+import { Home, Clock, Sparkles, User, Image as ImageIcon } from 'lucide-react-native';
 import { colors, radii, shadows } from '../../theme/colors';
 import { useHaptics } from '../../hooks/useHaptics';
 
 export const FloatingTabBar: React.FC<BottomTabBarProps> = ({ state, descriptors, navigation }) => {
   const { lightImpact } = useHaptics();
 
-  const getIcon = (routeName: string, isFocused: boolean) => {
+  const renderIcon = (routeName: string, isFocused: boolean) => {
+    const iconColor = isFocused ? '#FFFFFF' : '#6B7280';
+    const iconSize = 20;
+
     switch (routeName) {
-      case 'index': return isFocused ? '🏠' : '🏠';
-      case 'history': return isFocused ? '🕒' : '🕒';
-      case 'explore': return isFocused ? '✨' : '✨';
-      case 'profile': return isFocused ? '👤' : '👤';
-      default: return '📱';
+      case 'index':
+        return <Home size={iconSize} color={iconColor} />;
+      case 'history':
+        return <Clock size={iconSize} color={iconColor} />;
+      case 'explore':
+        return <Sparkles size={iconSize} color={iconColor} />;
+      case 'profile':
+        return <User size={iconSize} color={iconColor} />;
+      default:
+        return <ImageIcon size={iconSize} color={iconColor} />;
     }
   };
 
@@ -56,11 +65,9 @@ export const FloatingTabBar: React.FC<BottomTabBarProps> = ({ state, descriptors
               testID={options.tabBarTestID}
               onPress={onPress}
               style={[styles.tabButton, isFocused && styles.tabButtonActive]}
-              activeOpacity={0.8}
+              activeOpacity={0.85}
             >
-              <Text style={[styles.icon, isFocused && styles.iconActive]}>
-                {getIcon(route.name, isFocused)}
-              </Text>
+              {renderIcon(route.name, isFocused)}
               <Text style={[styles.label, isFocused && styles.labelActive]}>
                 {getLabel(route.name)}
               </Text>
@@ -83,41 +90,36 @@ const styles = StyleSheet.create({
   },
   glassBar: {
     flexDirection: 'row',
-    backgroundColor: 'rgba(255, 255, 255, 0.92)',
+    backgroundColor: 'rgba(255, 255, 255, 0.94)',
     borderRadius: radii.full,
-    paddingHorizontal: 8,
+    paddingHorizontal: 6,
     paddingVertical: 6,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.6)',
+    borderColor: colors.border,
     width: '100%',
     justifyContent: 'space-around',
     alignItems: 'center',
   },
   tabButton: {
     flex: 1,
+    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 8,
+    paddingVertical: 10,
+    paddingHorizontal: 12,
     borderRadius: radii.full,
+    gap: 6,
   },
   tabButtonActive: {
-    backgroundColor: '#EEF2FF',
-  },
-  icon: {
-    fontSize: 18,
-    opacity: 0.6,
-  },
-  iconActive: {
-    opacity: 1,
+    backgroundColor: colors.primary,
   },
   label: {
-    fontSize: 11,
+    fontSize: 12,
     fontWeight: '600',
-    color: colors.textMuted,
-    marginTop: 2,
+    color: colors.textSecondary,
   },
   labelActive: {
-    color: colors.primary,
+    color: '#FFFFFF',
     fontWeight: '700',
   },
 });

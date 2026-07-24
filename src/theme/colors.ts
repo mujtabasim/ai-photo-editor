@@ -1,73 +1,75 @@
 export const colors = {
-  primary: '#6b38d4',            // Lumina Purple
-  primaryLight: '#8455ef',       // Lumina Purple Container
-  primaryDark: '#5516be',
-  accent: '#0058be',             // Lumina Secondary Blue
-  accentLight: '#2170e4',
-  success: '#22C55E',
-  warning: '#a76500',            // Lumina Tertiary Orange/Gold
-  error: '#ba1a1a',              // Lumina Error Red
-  background: '#fef7ff',         // Lumina Background
-  secondaryBackground: '#f3ebf8',// Lumina Container Background
-  card: '#ffffff',
-  cardDark: '#1d1a23',
-  border: '#cbc3d7',             // Lumina Outline Variant
-  borderLight: '#ede5f3',        // Lumina Surface Container High
-  textPrimary: '#1d1a23',        // Lumina On-Surface
-  textSecondary: '#494454',      // Lumina On-Surface Variant
-  textMuted: '#7b7486',          // Lumina Outline
-  textWhite: '#ffffff',
-  glassBackground: 'rgba(254, 247, 255, 0.82)',
-  glassBorder: 'rgba(255, 255, 255, 0.5)',
-  glassDarkBackground: 'rgba(29, 26, 35, 0.88)',
+  primary: '#6C4DFF',            // Premium AI Purple
+  primaryLight: '#8B5CF6',       // Accent Purple
+  primaryDark: '#5534E0',
+  accent: '#8B5CF6',
+  accentLight: '#C084FC',
+  success: '#10B981',
+  warning: '#F59E0B',
+  error: '#EF4444',
+  background: '#FAFAFC',         // Crisp clean white/off-white background
+  secondaryBackground: '#F4F4F8',
+  card: '#FFFFFF',
+  cardDark: '#111827',
+  border: '#ECECF3',             // Soft subtle border
+  borderLight: '#F3F4F6',
+  textPrimary: '#111827',        // Sharp dark text
+  textSecondary: '#6B7280',      // Muted slate gray
+  textMuted: '#9CA3AF',
+  textWhite: '#FFFFFF',
+  glassBackground: 'rgba(255, 255, 255, 0.88)',
+  glassBorder: 'rgba(236, 236, 243, 0.7)',
+  glassDarkBackground: 'rgba(17, 24, 39, 0.90)',
   gradients: {
-    primary: ['#6b38d4', '#2170e4'], // Lumina Spectrum: Purple to Electric Blue
-    accent: ['#8455ef', '#a76500'],
+    primary: ['#6C4DFF', '#8B5CF6'],
+    accent: ['#8B5CF6', '#C084FC'],
+    hero: ['#F5F3FF', '#EDE9FE', '#FAFAFC'],
+    heroBanner: ['#6C4DFF', '#8B5CF6'],
+    card: ['#FFFFFF', '#FAFAFC'],
     emerald: ['#10B981', '#059669'],
-    sunset: ['#FF6B6B', '#a76500'],
-    ocean: ['#0058be', '#2170e4'],
-    cyber: ['#8455ef', '#ba1a1a', '#a76500'],
-    gold: ['#a76500', '#855000'],
-    glass: ['rgba(254, 247, 255, 0.85)', 'rgba(254, 247, 255, 0.5)'],
+    sunset: ['#F43F5E', '#FB7185'],
+    ocean: ['#3B82F6', '#1D4ED8'],
+    cyber: ['#6C4DFF', '#8B5CF6', '#EC4899'],
+    glass: ['rgba(255, 255, 255, 0.90)', 'rgba(250, 250, 252, 0.60)'],
   }
 };
 
 export const radii = {
-  sm: 4,
-  md: 12,
-  lg: 16,
-  xl: 24,
-  '2xl': 24, // Matches primary radius (24px)
+  sm: 8,
+  md: 14,
+  lg: 18,
+  xl: 20,
+  '2xl': 24,
   full: 9999,
 };
 
 export const shadows = {
   sm: {
-    shadowColor: '#1d1a23',
+    shadowColor: '#111827',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.04,
-    shadowRadius: 4,
+    shadowOpacity: 0.03,
+    shadowRadius: 8,
     elevation: 2,
   },
   md: {
-    shadowColor: '#6b38d4',
+    shadowColor: '#6C4DFF',
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.06,
-    shadowRadius: 12,
+    shadowOpacity: 0.08,
+    shadowRadius: 16,
     elevation: 4,
   },
   lg: {
-    shadowColor: '#1d1a23',
+    shadowColor: '#111827',
     shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.08,
-    shadowRadius: 24,
+    shadowOpacity: 0.06,
+    shadowRadius: 28,
     elevation: 8,
   },
   glow: {
-    shadowColor: '#6b38d4',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.22,
-    shadowRadius: 16,
+    shadowColor: '#6C4DFF',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.20,
+    shadowRadius: 20,
     elevation: 10,
   }
 };

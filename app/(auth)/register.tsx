@@ -1,108 +1,298 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, TextInput, TouchableOpacity, ScrollView, ActivityIndicator } from 'react-native';
 import { useRouter } from 'expo-router';
-import { colors } from '../../src/theme/colors';
-import { FormInput } from '../../src/components/ui/Inputs';
-import { PrimaryButton } from '../../src/components/ui/Buttons';
-import { useAuthStore } from '../../src/store/useAuthStore';
+import { Mail, Lock, User, Sparkles, ArrowRight } from 'lucide-react-native';
+import { colors, radii, shadows } from '../../src/theme/colors';
+import { useAuth } from '../../src/hooks/useAuth';
+import { useHaptics } from '../../src/hooks/useHaptics';
 
 export default function RegisterScreen() {
   const router = useRouter();
-  const [name, setName] = useState('Alex Rivera');
-  const [email, setEmail] = useState('alex.rivera@example.com');
-  const [password, setPassword] = useState('password123');
-  const { register, isLoading } = useAuthStore();
+  const { signUp } = useAuth();
+  const { lightImpact, notificationSuccess } = useHaptics();
+
+  const [displayName, setDisplayName] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  const validate = (): boolean => {
+    setErrorMessage(null);
+    if (!displayName.trim()) {
+      setErrorMessage('Please enter your name.');
+      return false;
+    }
+    if (!email.trim()) {
+      setErrorMessage('Please enter your email address.');
+      return false;
+    }
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email.trim())) {
+      setErrorMessage('Please enter a valid email address.');
+      return false;
+    }
+    if (!password || password.length < 6) {
+      setErrorMessage('Password must be at least 6 characters long.');
+      return false;
+    }
+    return true;
+  };
 
   const handleRegister = async () => {
-    await register(name, email);
-    router.replace('/(tabs)');
+    if (!validate()) return;
+    lightImpact();
+    setLoading(true);
+    setErrorMessage(null);
+
+    const { data, error } = await signUp(email.trim(), password, displayName.trim());
+
+    setLoading(false);
+    if (error) {
+      let msg = error.message;
+      if (msg.toLowerCase().includes('already registered')) {
+        msg = 'An account with this email already exists. Please log in.';
+      } else if (msg.toLowerCase().includes('rate limit')) {
+        msg = 'Supabase email rate limit exceeded (3-4 emails/hr limit). If your account was already created, click "Sign In" below to log in directly.';
+      }
+      setErrorMessage(msg);
+    } else if (data?.user) {
+      notificationSuccess();
+      router.replace('/(tabs)');
+    }
   };
 
   return (
-    <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
-      <View style={styles.header}>
-        <Text style={styles.welcomeText}>Create Account 🚀</Text>
-        <Text style={styles.subtitleText}>Join thousands creating stunning photos with AI</Text>
-      </View>
+    <View style={styles.container}>
+      <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+        {/* Header */}
+        <View style={styles.header}>
+          <View style={styles.logoBadge}>
+            <Sparkles size={28} color={colors.primary} />
+          </View>
+          <Text style={styles.appTitle}>Create Account</Text>
+          <Text style={styles.subtitle}>Join Lumina AI Studio to transform photos</Text>
+        </View>
 
-      <View style={styles.form}>
-        <FormInput
-          label="Full Name"
-          value={name}
-          onChangeText={setName}
-          placeholder="Alex Rivera"
-        />
+        {/* Form Card */}
+        <View style={[styles.card, shadows.sm]}>
+          <Text style={styles.cardHeaderTitle}>Get Started</Text>
+          <Text style={styles.cardHeaderSub}>Create a free account to get started</Text>
 
-        <FormInput
-          label="Email Address"
-          value={email}
-          onChangeText={setEmail}
-          placeholder="name@domain.com"
-        />
+          {errorMessage && (
+            <View style={styles.errorBox}>
+              <Text style={styles.errorText}>{errorMessage}</Text>
+            </View>
+          )}
 
-        <FormInput
-          label="Password"
-          value={password}
-          onChangeText={setPassword}
-          placeholder="At least 8 characters"
-          secureTextEntry
-        />
+          {/* Name Input */}
+          <View style={styles.inputGroup}>
+            <Text style={styles.label}>Full Name</Text>
+            <View style={styles.inputContainer}>
+              <User size={18} color={colors.textMuted} style={styles.inputIcon} />
+              <TextInput
+                value={displayName}
+                onChangeText={setDisplayName}
+                placeholder="Alex Rivera"
+                placeholderTextColor={colors.textMuted}
+                autoCorrect={false}
+                style={styles.input}
+              />
+            </View>
+          </View>
 
-        <PrimaryButton
-          title="Create Account"
-          onPress={handleRegister}
-          isLoading={isLoading}
-          style={{ marginTop: 16 }}
-        />
-      </View>
+          {/* Email Input */}
+          <View style={styles.inputGroup}>
+            <Text style={styles.label}>Email Address</Text>
+            <View style={styles.inputContainer}>
+              <Mail size={18} color={colors.textMuted} style={styles.inputIcon} />
+              <TextInput
+                value={email}
+                onChangeText={setEmail}
+                placeholder="name@example.com"
+                placeholderTextColor={colors.textMuted}
+                keyboardType="email-address"
+                autoCapitalize="none"
+                autoCorrect={false}
+                style={styles.input}
+              />
+            </View>
+          </View>
 
-      <View style={styles.footer}>
-        <Text style={styles.footerText}>Already have an account? </Text>
-        <TouchableOpacity onPress={() => router.push('/(auth)/login')}>
-          <Text style={styles.signupText}>Sign In</Text>
-        </TouchableOpacity>
-      </View>
-    </ScrollView>
+          {/* Password Input */}
+          <View style={styles.inputGroup}>
+            <Text style={styles.label}>Password (min 6 characters)</Text>
+            <View style={styles.inputContainer}>
+              <Lock size={18} color={colors.textMuted} style={styles.inputIcon} />
+              <TextInput
+                value={password}
+                onChangeText={setPassword}
+                placeholder="••••••••"
+                placeholderTextColor={colors.textMuted}
+                secureTextEntry
+                style={styles.input}
+              />
+            </View>
+          </View>
+
+          {/* Submit Button */}
+          <TouchableOpacity
+            disabled={loading}
+            onPress={handleRegister}
+            style={[styles.primaryBtn, shadows.md, loading && styles.btnDisabled]}
+            activeOpacity={0.88}
+          >
+            {loading ? (
+              <ActivityIndicator color="#FFFFFF" size="small" />
+            ) : (
+              <View style={styles.btnRow}>
+                <Text style={styles.primaryBtnText}>Register Account</Text>
+                <ArrowRight size={16} color="#FFFFFF" />
+              </View>
+            )}
+          </TouchableOpacity>
+        </View>
+
+        {/* Footer Link */}
+        <View style={styles.footerRow}>
+          <Text style={styles.footerText}>Already have an account? </Text>
+          <TouchableOpacity onPress={() => router.push('/(auth)/login')}>
+            <Text style={styles.linkText}>Sign In</Text>
+          </TouchableOpacity>
+        </View>
+      </ScrollView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    flexGrow: 1,
-    backgroundColor: '#FFFFFF',
+    flex: 1,
+    backgroundColor: colors.background,
+  },
+  scrollContent: {
     paddingHorizontal: 24,
-    paddingTop: 80,
+    paddingTop: 70,
     paddingBottom: 40,
-    justifyContent: 'space-between',
   },
   header: {
-    marginBottom: 32,
+    alignItems: 'center',
+    marginBottom: 28,
   },
-  welcomeText: {
-    fontSize: 28,
+  logoBadge: {
+    width: 64,
+    height: 64,
+    borderRadius: radii.full,
+    backgroundColor: '#F5F3FF',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 14,
+    borderWidth: 1,
+    borderColor: '#EDE9FE',
+  },
+  appTitle: {
+    fontSize: 26,
     fontWeight: '800',
     color: colors.textPrimary,
-    marginBottom: 8,
+    letterSpacing: -0.4,
   },
-  subtitleText: {
-    fontSize: 15,
+  subtitle: {
+    fontSize: 13,
     color: colors.textSecondary,
+    marginTop: 4,
   },
-  form: {
-    width: '100%',
+  card: {
+    backgroundColor: colors.card,
+    borderRadius: radii['2xl'],
+    padding: 24,
+    borderWidth: 1,
+    borderColor: colors.border,
   },
-  footer: {
+  cardHeaderTitle: {
+    fontSize: 18,
+    fontWeight: '800',
+    color: colors.textPrimary,
+  },
+  cardHeaderSub: {
+    fontSize: 13,
+    color: colors.textSecondary,
+    marginTop: 2,
+    marginBottom: 20,
+  },
+  errorBox: {
+    backgroundColor: '#FEF2F2',
+    borderColor: '#FCA5A5',
+    borderWidth: 1,
+    borderRadius: radii.lg,
+    padding: 12,
+    marginBottom: 16,
+  },
+  errorText: {
+    color: colors.error,
+    fontSize: 13,
+    fontWeight: '600',
+  },
+  inputGroup: {
+    marginBottom: 16,
+  },
+  label: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: colors.textPrimary,
+    marginBottom: 6,
+  },
+  inputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#F4F4F8',
+    borderRadius: radii.xl,
+    paddingHorizontal: 14,
+    height: 48,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  inputIcon: {
+    marginRight: 10,
+  },
+  input: {
+    flex: 1,
+    fontSize: 14,
+    color: colors.textPrimary,
+  },
+  primaryBtn: {
+    backgroundColor: colors.primary,
+    height: 48,
+    borderRadius: radii.full,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 8,
+  },
+  btnDisabled: {
+    opacity: 0.7,
+  },
+  btnRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  primaryBtnText: {
+    color: '#FFFFFF',
+    fontSize: 15,
+    fontWeight: '700',
+  },
+  footerRow: {
     flexDirection: 'row',
     justifyContent: 'center',
+    alignItems: 'center',
     marginTop: 24,
   },
   footerText: {
+    fontSize: 13,
     color: colors.textSecondary,
-    fontSize: 14,
   },
-  signupText: {
-    color: colors.primary,
+  linkText: {
+    fontSize: 13,
     fontWeight: '700',
-    fontSize: 14,
+    color: colors.primary,
   },
 });

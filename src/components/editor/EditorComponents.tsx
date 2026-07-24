@@ -1,14 +1,17 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
+import { ArrowLeft, Undo2, Redo2, Download, Sliders, Sparkles, Save } from 'lucide-react-native';
 import { colors, radii, shadows } from '../../theme/colors';
 import { useEditorStore } from '../../store/useEditorStore';
 import { useHaptics } from '../../hooks/useHaptics';
 import { AI_TOOLS_LIST } from '../../constants/aiTools';
+import { getLucideIcon } from '../ui/Cards';
 
 export const TopAppBar: React.FC<{
   onBack: () => void;
   onSave: () => void;
-}> = ({ onBack, onSave }) => {
+  onSaveHistory: () => void;
+}> = ({ onBack, onSave, onSaveHistory }) => {
   const { undo, redo, historyIndex, history } = useEditorStore();
   const { lightImpact, mediumImpact } = useHaptics();
 
@@ -21,7 +24,7 @@ export const TopAppBar: React.FC<{
         onPress={() => { lightImpact(); onBack(); }}
         style={styles.circleBtn}
       >
-        <Text style={styles.btnIcon}>←</Text>
+        <ArrowLeft size={18} color={colors.textPrimary} />
       </TouchableOpacity>
 
       <View style={styles.undoRedoGroup}>
@@ -30,30 +33,41 @@ export const TopAppBar: React.FC<{
           onPress={() => { lightImpact(); undo(); }}
           style={[styles.smallBtn, !canUndo && styles.btnDisabled]}
         >
-          <Text style={styles.btnIcon}>↩</Text>
+          <Undo2 size={16} color={canUndo ? colors.textPrimary : colors.textMuted} />
         </TouchableOpacity>
         <TouchableOpacity
           disabled={!canRedo}
           onPress={() => { lightImpact(); redo(); }}
           style={[styles.smallBtn, !canRedo && styles.btnDisabled]}
         >
-          <Text style={styles.btnIcon}>↪</Text>
+          <Redo2 size={16} color={canRedo ? colors.textPrimary : colors.textMuted} />
         </TouchableOpacity>
       </View>
 
-      <TouchableOpacity
-        onPress={() => { mediumImpact(); onSave(); }}
-        style={styles.saveBtn}
-      >
-        <Text style={styles.saveBtnText}>Export</Text>
-      </TouchableOpacity>
+      <View style={{ flexDirection: 'row', gap: 8, alignItems: 'center' }}>
+        <TouchableOpacity
+          onPress={() => { lightImpact(); onSaveHistory(); }}
+          style={styles.historyBtn}
+        >
+          <Save size={15} color={colors.primary} />
+          <Text style={styles.historyBtnText}>Save</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          onPress={() => { mediumImpact(); onSave(); }}
+          style={styles.saveBtn}
+        >
+          <Download size={15} color="#FFFFFF" />
+          <Text style={styles.saveBtnText}>Export</Text>
+        </TouchableOpacity>
+      </View>
     </View>
   );
 };
 
 export const BottomToolDock: React.FC<{
-  activeTab: 'tools' | 'adjust' | 'layers' | 'history';
-  onTabChange: (tab: 'tools' | 'adjust' | 'layers' | 'history') => void;
+  activeTab: 'tools' | 'adjust';
+  onTabChange: (tab: 'tools' | 'adjust') => void;
   onSelectTool: (toolId: string) => void;
 }> = ({ activeTab, onTabChange, onSelectTool }) => {
   const { activeTool } = useEditorStore();
@@ -61,31 +75,21 @@ export const BottomToolDock: React.FC<{
 
   return (
     <View style={[styles.dockContainer, shadows.lg]}>
-      {/* Dock Category Selector */}
+      {/* Dock Category Selector: AI Tools & Adjust only */}
       <View style={styles.categoryBar}>
         <TouchableOpacity
           onPress={() => { selection(); onTabChange('tools'); }}
           style={[styles.catTab, activeTab === 'tools' && styles.catTabActive]}
         >
+          <Sparkles size={14} color={activeTab === 'tools' ? '#FFFFFF' : colors.textSecondary} />
           <Text style={[styles.catText, activeTab === 'tools' && styles.catTextActive]}>AI Tools</Text>
         </TouchableOpacity>
         <TouchableOpacity
           onPress={() => { selection(); onTabChange('adjust'); }}
           style={[styles.catTab, activeTab === 'adjust' && styles.catTabActive]}
         >
+          <Sliders size={14} color={activeTab === 'adjust' ? '#FFFFFF' : colors.textSecondary} />
           <Text style={[styles.catText, activeTab === 'adjust' && styles.catTextActive]}>Adjust</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          onPress={() => { selection(); onTabChange('layers'); }}
-          style={[styles.catTab, activeTab === 'layers' && styles.catTabActive]}
-        >
-          <Text style={[styles.catText, activeTab === 'layers' && styles.catTextActive]}>Layers</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          onPress={() => { selection(); onTabChange('history'); }}
-          style={[styles.catTab, activeTab === 'history' && styles.catTabActive]}
-        >
-          <Text style={[styles.catText, activeTab === 'history' && styles.catTextActive]}>Timeline</Text>
         </TouchableOpacity>
       </View>
 
@@ -94,14 +98,20 @@ export const BottomToolDock: React.FC<{
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.toolScroll}>
           {AI_TOOLS_LIST.slice(0, 10).map((tool) => {
             const isSelected = activeTool === tool.id;
+            const iconColor = isSelected ? '#FFFFFF' : colors.textSecondary;
             return (
               <TouchableOpacity
                 key={tool.id}
                 onPress={() => { selection(); onSelectTool(tool.id); }}
-                style={[styles.toolCard, isSelected && styles.toolCardSelected]}
+                style={[
+                  styles.toolCard,
+                  shadows.sm,
+                  isSelected ? styles.toolCardSelected : styles.toolCardInactive
+                ]}
+                activeOpacity={0.85}
               >
-                <View style={styles.toolIconCircle}>
-                  <Text style={{ fontSize: 18 }}>✨</Text>
+                <View style={[styles.toolIconCircle, isSelected && styles.toolIconCircleSelected]}>
+                  {getLucideIcon(tool.iconName, 18, iconColor)}
                 </View>
                 <Text style={[styles.toolName, isSelected && styles.toolNameSelected]} numberOfLines={1}>
                   {tool.name}
@@ -134,7 +144,7 @@ export const AdjustmentsPanel: React.FC = () => {
         {controls.map((ctrl) => {
           const val = adjustments[ctrl.key];
           return (
-            <View key={ctrl.key} style={styles.sliderBox}>
+            <View key={ctrl.key} style={[styles.sliderBox, shadows.sm]}>
               <Text style={styles.sliderLabel}>{ctrl.label}</Text>
               <View style={styles.stepperRow}>
                 <TouchableOpacity
@@ -159,46 +169,6 @@ export const AdjustmentsPanel: React.FC = () => {
   );
 };
 
-export const LayersPanel: React.FC = () => {
-  const { layers, toggleLayerVisibility, toggleLayerLock } = useEditorStore();
-  const { lightImpact } = useHaptics();
-
-  return (
-    <View style={styles.layersContainer}>
-      {layers.map((layer) => (
-        <View key={layer.id} style={styles.layerRow}>
-          <TouchableOpacity onPress={() => { lightImpact(); toggleLayerVisibility(layer.id); }}>
-            <Text style={styles.layerAction}>{layer.isVisible ? '👁️' : '🙈'}</Text>
-          </TouchableOpacity>
-          <Text style={styles.layerTitle}>{layer.name}</Text>
-          <TouchableOpacity onPress={() => { lightImpact(); toggleLayerLock(layer.id); }}>
-            <Text style={styles.layerAction}>{layer.isLocked ? '🔒' : '🔓'}</Text>
-          </TouchableOpacity>
-        </View>
-      ))}
-    </View>
-  );
-};
-
-export const HistoryTimeline: React.FC = () => {
-  const { history, historyIndex } = useEditorStore();
-
-  return (
-    <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 16, gap: 10 }}>
-      {history.map((step, idx) => {
-        const isCurrent = idx === historyIndex;
-        return (
-          <View key={step.timestamp} style={[styles.historyNode, isCurrent && styles.historyNodeActive]}>
-            <Text style={[styles.historyText, isCurrent && styles.historyTextActive]}>
-              Step {idx + 1}: {step.action}
-            </Text>
-          </View>
-        );
-      })}
-    </ScrollView>
-  );
-};
-
 const styles = StyleSheet.create({
   topAppBar: {
     height: 56,
@@ -206,127 +176,159 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 16,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: colors.card,
     borderBottomWidth: 1,
-    borderBottomColor: colors.borderLight,
+    borderBottomColor: colors.border,
   },
   circleBtn: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: '#F1F5F9',
+    width: 38,
+    height: 38,
+    borderRadius: radii.full,
+    backgroundColor: '#F4F4F8',
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  btnIcon: {
-    fontSize: 18,
-    color: colors.textPrimary,
+    borderWidth: 1,
+    borderColor: colors.border,
   },
   undoRedoGroup: {
     flexDirection: 'row',
-    gap: 8,
-    backgroundColor: '#F1F5F9',
+    gap: 4,
+    backgroundColor: '#F4F4F8',
     borderRadius: radii.full,
     padding: 3,
+    borderWidth: 1,
+    borderColor: colors.border,
   },
   smallBtn: {
-    width: 34,
-    height: 34,
-    borderRadius: 17,
+    width: 32,
+    height: 32,
+    borderRadius: radii.full,
     alignItems: 'center',
     justifyContent: 'center',
   },
   btnDisabled: {
     opacity: 0.3,
   },
-  saveBtn: {
-    backgroundColor: colors.primary,
-    paddingHorizontal: 18,
+  historyBtn: {
+    backgroundColor: '#F5F3FF',
+    paddingHorizontal: 14,
     paddingVertical: 8,
     borderRadius: radii.full,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  historyBtnText: {
+    color: colors.primary,
+    fontWeight: '700',
+    fontSize: 13,
+  },
+  saveBtn: {
+    backgroundColor: colors.primary,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: radii.full,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    ...shadows.sm,
   },
   saveBtnText: {
     color: '#FFFFFF',
     fontWeight: '700',
-    fontSize: 14,
+    fontSize: 13,
   },
   dockContainer: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: colors.card,
     borderTopLeftRadius: radii['2xl'],
     borderTopRightRadius: radii['2xl'],
-    paddingTop: 12,
+    paddingTop: 14,
     paddingBottom: 24,
     borderTopWidth: 1,
-    borderColor: colors.borderLight,
+    borderColor: colors.border,
   },
   categoryBar: {
     flexDirection: 'row',
-    justifyContent: 'space-around',
+    justifyContent: 'center',
+    gap: 16,
     paddingHorizontal: 16,
-    marginBottom: 12,
+    marginBottom: 14,
   },
   catTab: {
-    paddingVertical: 6,
-    paddingHorizontal: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingVertical: 8,
+    paddingHorizontal: 24,
     borderRadius: radii.full,
   },
   catTabActive: {
-    backgroundColor: '#EEF2FF',
+    backgroundColor: colors.primary,
   },
   catText: {
     fontSize: 13,
     fontWeight: '600',
-    color: colors.textMuted,
+    color: colors.textSecondary,
   },
   catTextActive: {
-    color: colors.primary,
+    color: '#FFFFFF',
     fontWeight: '700',
   },
   toolScroll: {
     paddingHorizontal: 16,
-    gap: 12,
+    gap: 10,
   },
   toolCard: {
-    width: 80,
+    width: 90,
     alignItems: 'center',
-    padding: 10,
+    paddingVertical: 10,
+    paddingHorizontal: 8,
     borderRadius: radii.xl,
-    backgroundColor: '#F8FAFC',
     borderWidth: 1,
-    borderColor: colors.borderLight,
   },
   toolCardSelected: {
+    backgroundColor: colors.primary,
     borderColor: colors.primary,
-    backgroundColor: '#EEF2FF',
+  },
+  toolCardInactive: {
+    backgroundColor: colors.card,
+    borderColor: colors.border,
   },
   toolIconCircle: {
     width: 36,
     height: 36,
-    borderRadius: 18,
-    backgroundColor: '#FFFFFF',
+    borderRadius: radii.full,
+    backgroundColor: '#F4F4F8',
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 6,
   },
+  toolIconCircleSelected: {
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+  },
   toolName: {
     fontSize: 11,
     fontWeight: '600',
-    color: colors.textSecondary,
+    color: colors.textPrimary,
     textAlign: 'center',
   },
   toolNameSelected: {
-    color: colors.primary,
+    color: '#FFFFFF',
     fontWeight: '700',
   },
   adjustPanel: {
     paddingVertical: 8,
   },
   sliderBox: {
-    backgroundColor: '#F8FAFC',
+    backgroundColor: colors.card,
     borderRadius: radii.xl,
     padding: 12,
     alignItems: 'center',
-    width: 120,
+    width: 124,
+    borderWidth: 1,
+    borderColor: colors.border,
   },
   sliderLabel: {
     fontSize: 12,
@@ -342,15 +344,15 @@ const styles = StyleSheet.create({
   stepBtn: {
     width: 28,
     height: 28,
-    borderRadius: 14,
-    backgroundColor: '#FFFFFF',
+    borderRadius: radii.full,
+    backgroundColor: '#F4F4F8',
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
     borderColor: colors.border,
   },
   stepBtnText: {
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: '700',
     color: colors.textPrimary,
   },
@@ -358,42 +360,5 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '700',
     color: colors.primary,
-  },
-  layersContainer: {
-    paddingHorizontal: 20,
-    gap: 8,
-  },
-  layerRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    backgroundColor: '#F8FAFC',
-    padding: 10,
-    borderRadius: radii.lg,
-  },
-  layerAction: {
-    fontSize: 16,
-  },
-  layerTitle: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: colors.textPrimary,
-  },
-  historyNode: {
-    backgroundColor: '#F1F5F9',
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: radii.lg,
-  },
-  historyNodeActive: {
-    backgroundColor: colors.primary,
-  },
-  historyText: {
-    fontSize: 12,
-    color: colors.textSecondary,
-    fontWeight: '600',
-  },
-  historyTextActive: {
-    color: '#FFFFFF',
   },
 });

@@ -2,18 +2,19 @@ import React, { useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
+import { UploadCloud, Camera, Images, X } from 'lucide-react-native';
 import { colors, radii, shadows } from '../../src/theme/colors';
 import { PrimaryButton } from '../../src/components/ui/Buttons';
 import { GlassCard } from '../../src/components/ui/Cards';
 import { useEditorStore } from '../../src/store/useEditorStore';
-import { MOCK_PROJECTS } from '../../src/constants/mockData';
+import { useHistoryStore } from '../../src/store/useHistoryStore';
 import { uploadApi } from '../../src/services';
 
 export default function UploadScreen() {
   const router = useRouter();
   const setSelectedImage = useEditorStore((s) => s.setSelectedImage);
+  const { projects } = useHistoryStore();
 
-  // Task 3: Clear editor store when entering the Upload screen to reset stale state
   useEffect(() => {
     console.log('[UploadScreen] Resetting editor state to clear previous session variables.');
     useEditorStore.getState().clearEditor();
@@ -27,7 +28,7 @@ export default function UploadScreen() {
         console.log(`[UploadScreen] Upload success. Creating project: ${res.projectId}, originalImageId: ${res.fileId}`);
         useEditorStore.getState().setProject({
           id: res.projectId || `proj_${Date.now()}`,
-          title: 'Uploaded Project',
+          title: 'Uploaded Photo',
           originalUrl: res.imageUrl,
           processedUrl: res.imageUrl,
           thumbnailUrl: res.imageUrl,
@@ -66,7 +67,7 @@ export default function UploadScreen() {
       }
     } catch (err: any) {
       console.warn('Image picker error:', err?.message || err);
-      await handleSelectSample('https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=1200');
+      Alert.alert('Error', 'Failed to pick image from library.');
     }
   };
 
@@ -88,7 +89,7 @@ export default function UploadScreen() {
       }
     } catch (err: any) {
       console.warn('Camera launcher error:', err?.message || err);
-      await handleSelectSample('https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=1200');
+      Alert.alert('Error', 'Failed to take photo with camera.');
     }
   };
 
@@ -98,7 +99,7 @@ export default function UploadScreen() {
         {/* Header */}
         <View style={styles.header}>
           <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
-            <Text style={styles.backText}>✕ Close</Text>
+            <X size={20} color={colors.textSecondary} />
           </TouchableOpacity>
           <Text style={styles.title}>Import Photos</Text>
           <Text style={styles.subtitle}>Select an image to process with AI models</Text>
@@ -111,7 +112,7 @@ export default function UploadScreen() {
           style={[styles.dropzone, shadows.sm]}
         >
           <View style={styles.dropIconBox}>
-            <Text style={{ fontSize: 40 }}>☁️</Text>
+            <UploadCloud size={32} color={colors.primary} />
           </View>
           <Text style={styles.dropTitle}>Tap to Select Image from Photo Library</Text>
           <Text style={styles.dropSub}>or drag & drop file here (PNG, JPG, RAW)</Text>
@@ -126,43 +127,47 @@ export default function UploadScreen() {
         <View style={styles.actionGrid}>
           <TouchableOpacity
             onPress={handleTakePhoto}
-            style={[styles.actionCard, { backgroundColor: '#EEF2FF' }]}
+            style={[styles.actionCard, shadows.sm]}
           >
-            <Text style={{ fontSize: 28, marginBottom: 8 }}>📸</Text>
+            <Camera size={26} color={colors.primary} style={{ marginBottom: 8 }} />
             <Text style={styles.actionTitle}>Take Photo</Text>
             <Text style={styles.actionSub}>Use device camera</Text>
           </TouchableOpacity>
 
           <TouchableOpacity
             onPress={handlePickImage}
-            style={[styles.actionCard, { backgroundColor: '#FAF5FF' }]}
+            style={[styles.actionCard, shadows.sm]}
           >
-            <Text style={{ fontSize: 28, marginBottom: 8 }}>📚</Text>
-            <Text style={styles.actionTitle}>Batch Import</Text>
-            <Text style={styles.actionSub}>Select up to 50 items</Text>
+            <Images size={26} color={colors.primary} style={{ marginBottom: 8 }} />
+            <Text style={styles.actionTitle}>Library</Text>
+            <Text style={styles.actionSub}>Choose from photos</Text>
           </TouchableOpacity>
         </View>
 
         {/* Recent Imports */}
-        <Text style={styles.sectionTitle}>Recent Camera Roll Imports</Text>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.recentScroll}>
-          {MOCK_PROJECTS.map((p) => (
-            <TouchableOpacity
-              key={p.id}
-              onPress={() => handleSelectSample(p.originalUrl)}
-              style={styles.recentItem}
-            >
-              <Image source={{ uri: p.thumbnailUrl }} style={styles.recentThumb} />
-            </TouchableOpacity>
-          ))}
-        </ScrollView>
+        {projects.length > 0 && (
+          <>
+            <Text style={styles.sectionTitle}>Recent Project Imports</Text>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.recentScroll}>
+              {projects.map((p) => (
+                <TouchableOpacity
+                  key={p.id}
+                  onPress={() => handleSelectSample(p.originalUrl)}
+                  style={styles.recentItem}
+                >
+                  <Image source={{ uri: p.thumbnailUrl }} style={styles.recentThumb} />
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          </>
+        )}
 
         {/* Supported Formats Card */}
         <GlassCard style={{ marginTop: 24 }}>
           <Text style={styles.formatTitle}>Supported Input Formats</Text>
           <Text style={styles.formatList}>• JPEG, PNG, WEBP, HEIC, HEIF, TIFF</Text>
           <Text style={styles.formatList}>• Camera RAW (CR2, NEF, ARW, DNG)</Text>
-          <Text style={styles.formatList}>• Max resolution up to 8K (50MB max file size)</Text>
+          <Text style={styles.formatList}>• Max resolution up to 8K</Text>
         </GlassCard>
       </ScrollView>
     </View>
@@ -185,11 +190,14 @@ const styles = StyleSheet.create({
   backBtn: {
     alignSelf: 'flex-end',
     marginBottom: 12,
-  },
-  backText: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: colors.textSecondary,
+    width: 36,
+    height: 36,
+    borderRadius: radii.full,
+    backgroundColor: colors.card,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: colors.border,
   },
   title: {
     fontSize: 26,
@@ -202,8 +210,8 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   dropzone: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: radii.xl,
+    backgroundColor: colors.card,
+    borderRadius: radii['2xl'],
     borderWidth: 2,
     borderColor: colors.primary,
     borderStyle: 'dashed',
@@ -212,10 +220,10 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   dropIconBox: {
-    width: 72,
-    height: 72,
-    borderRadius: 36,
-    backgroundColor: '#EEF2FF',
+    width: 64,
+    height: 64,
+    borderRadius: radii.full,
+    backgroundColor: '#F5F3FF',
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 16,
@@ -239,8 +247,11 @@ const styles = StyleSheet.create({
   actionCard: {
     flex: 1,
     borderRadius: radii.xl,
-    padding: 16,
+    padding: 18,
     alignItems: 'center',
+    backgroundColor: colors.card,
+    borderWidth: 1,
+    borderColor: colors.border,
   },
   actionTitle: {
     fontSize: 14,
@@ -266,6 +277,8 @@ const styles = StyleSheet.create({
     height: 80,
     borderRadius: radii.lg,
     overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: colors.border,
   },
   recentThumb: {
     width: '100%',

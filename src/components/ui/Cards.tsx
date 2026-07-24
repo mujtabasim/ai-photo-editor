@@ -1,7 +1,43 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ViewStyle } from 'react-native';
+import {
+  Scissors, Eraser, Sparkles, ArrowUpSquare, Palette, Wand2,
+  UserRound, Smile, Sun, Cloud, FileText, Layers, Copy,
+  Maximize, Crop, Filter, EyeOff, ShoppingBag, Paintbrush,
+  WandSparkles, ArchiveRestore, Brush, Image as ImageIcon
+} from 'lucide-react-native';
 import { colors, radii, shadows } from '../../theme/colors';
 import { useHaptics } from '../../hooks/useHaptics';
+
+const ICON_MAP: Record<string, React.ElementType> = {
+  Scissors,
+  Eraser,
+  Sparkles,
+  ArrowUpSquare,
+  Palette,
+  Wand2,
+  UserRound,
+  Smile,
+  Sun,
+  Cloud,
+  FileText,
+  Layers,
+  Copy,
+  Maximize,
+  Crop,
+  Filter,
+  EyeOff,
+  ShoppingBag,
+  Paintbrush,
+  WandSparkles,
+  ArchiveRestore,
+  Brush,
+};
+
+export const getLucideIcon = (name?: string, size = 20, color = colors.primary) => {
+  const IconComponent = (name && ICON_MAP[name]) ? ICON_MAP[name] : Sparkles;
+  return <IconComponent size={size} color={color} />;
+};
 
 export const GlassCard: React.FC<{
   children: React.ReactNode;
@@ -47,7 +83,7 @@ export const FeatureCard: React.FC<{
   onPress: () => void;
   gradientColors?: string[];
   isComingSoon?: boolean;
-}> = ({ title, description, badge, onPress, isComingSoon }) => {
+}> = ({ title, description, iconName, badge, onPress, isComingSoon }) => {
   const { lightImpact } = useHaptics();
 
   return (
@@ -61,7 +97,7 @@ export const FeatureCard: React.FC<{
     >
       <View style={styles.featureHeader}>
         <View style={styles.iconPlaceholder}>
-          <Text style={{ fontSize: 20 }}>✨</Text>
+          {getLucideIcon(iconName, 20, colors.primary)}
         </View>
         {badge && (
           <View style={[styles.badge, isComingSoon && styles.comingSoonBadge]}>
@@ -144,14 +180,14 @@ const styles = StyleSheet.create({
     backgroundColor: colors.card,
     borderRadius: radii['2xl'],
     borderWidth: 1,
-    borderColor: colors.borderLight,
+    borderColor: colors.border,
     padding: 16,
   },
   featureCard: {
     backgroundColor: colors.card,
     borderRadius: radii['2xl'],
     borderWidth: 1,
-    borderColor: colors.borderLight,
+    borderColor: colors.border,
     padding: 16,
     width: '48%',
     marginBottom: 12,
@@ -166,12 +202,14 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: radii.xl,
-    backgroundColor: '#F1F5F9',
+    backgroundColor: '#F5F3FF',
     alignItems: 'center',
     justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: '#EDE9FE',
   },
   badge: {
-    backgroundColor: '#EEF2FF',
+    backgroundColor: '#F5F3FF',
     paddingHorizontal: 8,
     paddingVertical: 3,
     borderRadius: radii.full,
@@ -188,7 +226,7 @@ const styles = StyleSheet.create({
     color: '#D97706',
   },
   featureTitle: {
-    fontSize: 15,
+    fontSize: 14,
     fontWeight: '700',
     color: colors.textPrimary,
     marginBottom: 4,
@@ -203,7 +241,7 @@ const styles = StyleSheet.create({
     borderRadius: radii.xl,
     padding: 16,
     borderWidth: 1,
-    borderColor: colors.borderLight,
+    borderColor: colors.border,
     flex: 1,
   },
   statHeader: {
@@ -239,7 +277,7 @@ const styles = StyleSheet.create({
   },
   planCardSelected: {
     borderColor: colors.primary,
-    backgroundColor: '#F5F5FE',
+    backgroundColor: '#F5F3FF',
   },
   planCardPopular: {
     borderColor: colors.accent,

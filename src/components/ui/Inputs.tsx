@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, TextInput, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { Search, X } from 'lucide-react-native';
 import { colors, radii } from '../../theme/colors';
 import { useHaptics } from '../../hooks/useHaptics';
 
@@ -11,7 +12,7 @@ export const SearchBar: React.FC<{
 }> = ({ value, onChangeText, placeholder = 'Search AI tools, styles, or projects...', onClear }) => {
   return (
     <View style={styles.searchContainer}>
-      <Text style={styles.searchIcon}>🔍</Text>
+      <Search size={18} color={colors.textMuted} />
       <TextInput
         style={styles.searchInput}
         value={value}
@@ -21,7 +22,7 @@ export const SearchBar: React.FC<{
       />
       {value.length > 0 && (
         <TouchableOpacity onPress={onClear || (() => onChangeText(''))}>
-          <Text style={styles.clearIcon}>✕</Text>
+          <X size={16} color={colors.textMuted} />
         </TouchableOpacity>
       )}
     </View>
@@ -108,27 +109,22 @@ export const Chip: React.FC<{
 
 const styles = StyleSheet.create({
   searchContainer: {
-    backgroundColor: '#F1F5F9',
-    borderRadius: radii.xl,
+    backgroundColor: '#F4F4F8',
+    borderRadius: radii.full,
     height: 48,
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 16,
+    paddingHorizontal: 18,
     gap: 10,
     marginBottom: 16,
-  },
-  searchIcon: {
-    fontSize: 16,
+    borderWidth: 1,
+    borderColor: colors.border,
   },
   searchInput: {
     flex: 1,
-    fontSize: 15,
-    color: colors.textPrimary,
-  },
-  clearIcon: {
-    color: colors.textMuted,
     fontSize: 14,
-    padding: 4,
+    color: colors.textPrimary,
+    fontWeight: '500',
   },
   formContainer: {
     marginBottom: 16,
@@ -158,45 +154,50 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   segmentedContainer: {
-    backgroundColor: '#F1F5F9',
-    borderRadius: radii.xl,
+    backgroundColor: '#F4F4F8',
+    borderRadius: radii.full,
     padding: 4,
     flexDirection: 'row',
     marginBottom: 16,
+    borderWidth: 1,
+    borderColor: colors.border,
   },
   segmentBtn: {
     flex: 1,
     height: 38,
-    borderRadius: radii.lg,
+    borderRadius: radii.full,
     alignItems: 'center',
     justifyContent: 'center',
   },
   segmentBtnSelected: {
-    backgroundColor: '#FFFFFF',
-    shadowColor: '#000',
+    backgroundColor: colors.primary,
+    shadowColor: colors.primary,
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    elevation: 2,
+    shadowOpacity: 0.15,
+    shadowRadius: 6,
+    elevation: 3,
   },
   segmentText: {
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: '600',
     color: colors.textSecondary,
   },
   segmentTextSelected: {
-    color: colors.textPrimary,
+    color: '#FFFFFF',
+    fontWeight: '700',
   },
   chip: {
-    backgroundColor: '#F1F5F9',
-    paddingHorizontal: 14,
+    backgroundColor: '#F4F4F8',
+    paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: radii.full,
     marginRight: 8,
-    marginBottom: 8,
+    borderWidth: 1,
+    borderColor: colors.border,
   },
   chipSelected: {
     backgroundColor: colors.primary,
+    borderColor: colors.primary,
   },
   chipText: {
     fontSize: 13,
@@ -205,5 +206,6 @@ const styles = StyleSheet.create({
   },
   chipTextSelected: {
     color: '#FFFFFF',
+    fontWeight: '700',
   },
 });

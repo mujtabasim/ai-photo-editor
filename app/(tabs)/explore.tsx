@@ -1,9 +1,11 @@
 import React from 'react';
 import { View, Text, StyleSheet, ScrollView, Image, TouchableOpacity } from 'react-native';
 import { useRouter } from 'expo-router';
+import { Sparkles, Heart } from 'lucide-react-native';
 import { colors, radii, shadows } from '../../src/theme/colors';
 import { MOCK_EXPLORE_TEMPLATES } from '../../src/constants/mockData';
 import { AI_TOOLS_LIST } from '../../src/constants/aiTools';
+import { getLucideIcon } from '../../src/components/ui/Cards';
 
 export default function ExploreScreen() {
   const router = useRouter();
@@ -12,7 +14,10 @@ export default function ExploreScreen() {
     <View style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
         <View style={styles.header}>
-          <Text style={styles.title}>AI Marketplace ✨</Text>
+          <View style={styles.titleRow}>
+            <Text style={styles.title}>AI Marketplace</Text>
+            <Sparkles size={20} color={colors.primary} />
+          </View>
           <Text style={styles.subtitle}>Discover community templates, trending styles & prompt tools</Text>
         </View>
 
@@ -29,30 +34,46 @@ export default function ExploreScreen() {
             <Text style={styles.heroTitle}>Studio Portrait Presets v3</Text>
             <Text style={styles.heroSub}>Cinematic lighting & skin retouching in 1 tap</Text>
           </View>
-          <Text style={{ fontSize: 54 }}>🌟</Text>
+          <View style={styles.heroIconFrame}>
+            <Sparkles size={32} color="#FFFFFF" />
+          </View>
         </TouchableOpacity>
 
         {/* Trending AI Presets Grid */}
         <Text style={styles.sectionTitle}>Trending Templates</Text>
-        <View style={styles.templatesGrid}>
-          {MOCK_EXPLORE_TEMPLATES.map((tpl) => (
-            <TouchableOpacity
-              key={tpl.id}
-              activeOpacity={0.88}
-              onPress={() => router.push('/editor')}
-              style={[styles.templateCard, shadows.sm]}
-            >
-              <Image source={{ uri: tpl.imageUrl }} style={styles.templateImage} />
-              <View style={styles.tagBadge}>
-                <Text style={styles.tagText}>{tpl.tag}</Text>
-              </View>
-              <View style={styles.templateMeta}>
-                <Text style={styles.templateTitle} numberOfLines={1}>{tpl.title}</Text>
-                <Text style={styles.templateAuthor}>by {tpl.author} • ❤️ {tpl.likes}</Text>
-              </View>
-            </TouchableOpacity>
-          ))}
-        </View>
+        {MOCK_EXPLORE_TEMPLATES.length === 0 ? (
+          <View style={[styles.emptyTemplatesCard, shadows.sm]}>
+            <Sparkles size={32} color={colors.textMuted} />
+            <Text style={styles.emptyTemplatesTitle}>No Community Templates</Text>
+            <Text style={styles.emptyTemplatesSub}>Community presets and styles will appear here.</Text>
+          </View>
+        ) : (
+          <View style={styles.templatesGrid}>
+            {MOCK_EXPLORE_TEMPLATES.map((tpl) => (
+              <TouchableOpacity
+                key={tpl.id}
+                activeOpacity={0.88}
+                onPress={() => router.push('/editor')}
+                style={[styles.templateCard, shadows.sm]}
+              >
+                <Image source={{ uri: tpl.imageUrl }} style={styles.templateImage} />
+                <View style={styles.tagBadge}>
+                  <Text style={styles.tagText}>{tpl.tag}</Text>
+                </View>
+                <View style={styles.templateMeta}>
+                  <Text style={styles.templateTitle} numberOfLines={1}>{tpl.title}</Text>
+                  <View style={styles.authorRow}>
+                    <Text style={styles.templateAuthor}>by {tpl.author}</Text>
+                    <View style={styles.likesRow}>
+                      <Heart size={11} color={colors.error} fill={colors.error} />
+                      <Text style={styles.likesText}>{tpl.likes}</Text>
+                    </View>
+                  </View>
+                </View>
+              </TouchableOpacity>
+            ))}
+          </View>
+        )}
 
         {/* Popular AI Styles Carousel */}
         <Text style={styles.sectionTitle}>Popular Styles</Text>
@@ -64,7 +85,7 @@ export default function ExploreScreen() {
               style={[styles.styleCard, shadows.sm]}
             >
               <View style={styles.styleCircle}>
-                <Text style={{ fontSize: 24 }}>✨</Text>
+                {getLucideIcon(tool.iconName, 20, colors.primary)}
               </View>
               <Text style={styles.styleName}>{tool.name}</Text>
             </TouchableOpacity>
@@ -78,7 +99,7 @@ export default function ExploreScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.secondaryBackground,
+    backgroundColor: colors.background,
   },
   scrollContent: {
     paddingHorizontal: 20,
@@ -87,6 +108,11 @@ const styles = StyleSheet.create({
   },
   header: {
     marginBottom: 20,
+  },
+  titleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
   },
   title: {
     fontSize: 26,
@@ -99,21 +125,22 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   heroBanner: {
-    backgroundColor: colors.accent,
+    backgroundColor: colors.primary,
     borderRadius: radii['2xl'],
-    padding: 20,
+    padding: 22,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: 24,
+    marginBottom: 26,
   },
   heroText: {
     flex: 1,
+    paddingRight: 12,
   },
   badge: {
     backgroundColor: 'rgba(255, 255, 255, 0.2)',
-    paddingHorizontal: 8,
-    paddingVertical: 3,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
     borderRadius: radii.full,
     alignSelf: 'flex-start',
     marginBottom: 8,
@@ -133,11 +160,40 @@ const styles = StyleSheet.create({
     color: 'rgba(255, 255, 255, 0.85)',
     fontSize: 12,
   },
+  heroIconFrame: {
+    width: 52,
+    height: 52,
+    borderRadius: radii.full,
+    backgroundColor: 'rgba(255, 255, 255, 0.15)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   sectionTitle: {
     fontSize: 18,
-    fontWeight: '700',
+    fontWeight: '800',
     color: colors.textPrimary,
     marginBottom: 14,
+  },
+  emptyTemplatesCard: {
+    backgroundColor: colors.card,
+    borderRadius: radii['2xl'],
+    padding: 28,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 24,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  emptyTemplatesTitle: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: colors.textPrimary,
+    marginTop: 8,
+  },
+  emptyTemplatesSub: {
+    fontSize: 12,
+    color: colors.textSecondary,
+    marginTop: 2,
   },
   templatesGrid: {
     flexDirection: 'row',
@@ -152,7 +208,7 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     overflow: 'hidden',
     borderWidth: 1,
-    borderColor: colors.borderLight,
+    borderColor: colors.border,
   },
   templateImage: {
     width: '100%',
@@ -162,9 +218,9 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: 10,
     left: 10,
-    backgroundColor: 'rgba(15, 23, 42, 0.75)',
+    backgroundColor: 'rgba(17, 24, 39, 0.75)',
     paddingHorizontal: 8,
-    paddingVertical: 2,
+    paddingVertical: 3,
     borderRadius: radii.full,
   },
   tagText: {
@@ -180,10 +236,25 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: colors.textPrimary,
   },
+  authorRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginTop: 4,
+  },
   templateAuthor: {
     fontSize: 11,
     color: colors.textMuted,
-    marginTop: 2,
+  },
+  likesRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 3,
+  },
+  likesText: {
+    fontSize: 11,
+    color: colors.textSecondary,
+    fontWeight: '600',
   },
   styleScroll: {
     gap: 12,
@@ -196,13 +267,13 @@ const styles = StyleSheet.create({
     padding: 12,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: colors.borderLight,
+    borderColor: colors.border,
   },
   styleCircle: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-    backgroundColor: '#EEF2FF',
+    width: 48,
+    height: 48,
+    borderRadius: radii.full,
+    backgroundColor: '#F5F3FF',
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 8,

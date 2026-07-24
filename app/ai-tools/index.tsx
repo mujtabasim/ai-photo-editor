@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { useRouter } from 'expo-router';
+import { ArrowLeft } from 'lucide-react-native';
 import { colors, radii, shadows } from '../../src/theme/colors';
 import { SearchBar, Chip } from '../../src/components/ui/Inputs';
 import { FeatureCard } from '../../src/components/ui/Cards';
@@ -42,7 +43,7 @@ export default function AIToolsScreen() {
         {/* Header */}
         <View style={styles.headerRow}>
           <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
-            <Text style={styles.backText}>← Back</Text>
+            <ArrowLeft size={18} color={colors.textPrimary} />
           </TouchableOpacity>
           <Text style={styles.title}>AI Tools Suite</Text>
           <Text style={styles.subtitle}>24+ Next-Gen Neural Network Image Transformers</Text>
@@ -75,6 +76,7 @@ export default function AIToolsScreen() {
               title={tool.name}
               description={tool.description}
               badge={tool.badgeText}
+              iconName={tool.iconName}
               isComingSoon={tool.isComingSoon}
               onPress={() => handleSelectTool(tool.id)}
             />
@@ -88,7 +90,7 @@ export default function AIToolsScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.secondaryBackground,
+    backgroundColor: colors.background,
   },
   scrollContent: {
     paddingHorizontal: 20,
@@ -99,12 +101,15 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   backBtn: {
-    marginBottom: 8,
-  },
-  backText: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: colors.primary,
+    marginBottom: 12,
+    width: 38,
+    height: 38,
+    borderRadius: radii.full,
+    backgroundColor: colors.card,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: colors.border,
   },
   title: {
     fontSize: 26,

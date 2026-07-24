@@ -1,5 +1,7 @@
 import { create } from 'zustand';
-import { EditorState, AdjustmentState, Layer, ProjectHistory } from '../types';
+import { persist, createJSONStorage } from 'zustand/middleware';
+import { Platform } from 'react-native';
+import { EditorState, AdjustmentState, ProjectHistory, EditorSnapshot } from '../types';
 
 const defaultAdjustments: AdjustmentState = {
   brightness: 0,
@@ -14,10 +16,67 @@ const defaultAdjustments: AdjustmentState = {
   tint: 0,
 };
 
-const defaultLayers: Layer[] = [
-  { id: 'layer_bg', name: 'Background Image', type: 'image', isVisible: true, isLocked: true, opacity: 1 },
-  { id: 'layer_ai_mask', name: 'AI Subject Cutout', type: 'ai_mask', isVisible: true, isLocked: false, opacity: 1 },
-];
+const customStorage = {
+  getItem: async (name: string) => {
+    if (Platform.OS === 'web' && typeof window !== 'undefined' && window.localStorage) {
+      try {
+        return window.localStorage.getItem(name);
+      } catch (e) {
+        return null;
+      }
+    }
+    try {
+      const SecureStore = require('expo-secure-store');
+      return await SecureStore.getItemAsync(name);
+    } catch (e) {
+      return null;
+    }
+  },
+  setItem: async (name: string, value: string) => {
+    if (Platform.OS === 'web' && typeof window !== 'undefined' && window.localStorage) {
+      try {
+        window.localStorage.setItem(name, value);
+      } catch (e) {
+        console.warn(`[Storage Quota Warning] Could not setItem '${name}' into localStorage:`, e);
+      }
+      return;
+    }
+    try {
+      const SecureStore = require('expo-secure-store');
+      await SecureStore.setItemAsync(name, value);
+    } catch (e) {}
+  },
+  removeItem: async (name: string) => {
+    if (Platform.OS === 'web' && typeof window !== 'undefined' && window.localStorage) {
+      try {
+        window.localStorage.removeItem(name);
+      } catch (e) {}
+      return;
+    }
+    try {
+      const SecureStore = require('expo-secure-store');
+      await SecureStore.deleteItemAsync(name);
+    } catch (e) {}
+  },
+};
+
+const sanitizeUrl = (url?: string | null): string | null => {
+  if (!url) return null;
+  if (url.startsWith('data:') && url.length > 100000) {
+    return null;
+  }
+  return url;
+};
+
+const sanitizeProject = (p: ProjectHistory | null): ProjectHistory | null => {
+  if (!p) return null;
+  return {
+    ...p,
+    processedUrl: sanitizeUrl(p.processedUrl) || (p.originalUrl?.startsWith('data:') ? '' : p.originalUrl),
+    thumbnailUrl: sanitizeUrl(p.thumbnailUrl) || (p.originalUrl?.startsWith('data:') ? '' : p.originalUrl),
+    originalUrl: sanitizeUrl(p.originalUrl) || '',
+  };
+};
 
 interface EditorStore extends EditorState {
   setProject: (project: ProjectHistory) => void;
@@ -25,8 +84,6 @@ interface EditorStore extends EditorState {
   setActiveTool: (toolId: string | null) => void;
   updateAdjustment: (key: keyof AdjustmentState, value: number) => void;
   resetAdjustments: () => void;
-  toggleLayerVisibility: (layerId: string) => void;
-  toggleLayerLock: (layerId: string) => void;
   undo: () => void;
   redo: () => void;
   setZoomScale: (scale: number) => void;
@@ -34,87 +91,9 @@ interface EditorStore extends EditorState {
   clearEditor: () => void;
 }
 
-export const useEditorStore = create<EditorStore>((set, get) => ({
-  currentProject: null,
-  selectedImageUri: 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=1200',
-  activeTool: 'bg-remover',
-  adjustments: defaultAdjustments,
-  layers: defaultLayers,
-  history: [{ timestamp: Date.now(), action: 'Original Image Loaded' }],
-  historyIndex: 0,
-  zoomScale: 1,
-  isProcessing: false,
-  processingProgress: 0,
-
-  setProject: (project) => {
-    set({
-      currentProject: project,
-      selectedImageUri: project.processedUrl || project.originalUrl,
-      activeTool: project.toolUsed,
-    });
-  },
-
-  setSelectedImage: (uri) => {
-    set({ selectedImageUri: uri });
-  },
-
-  setActiveTool: (toolId) => {
-    set({ activeTool: toolId });
-  },
-
-  updateAdjustment: (key, value) => {
-    const state = get();
-    const newAdjustments = { ...state.adjustments, [key]: value };
-    const newHistory = state.history.slice(0, state.historyIndex + 1);
-    newHistory.push({ timestamp: Date.now(), action: `Adjusted ${key} (${value})` });
-    
-    set({
-      adjustments: newAdjustments,
-      history: newHistory,
-      historyIndex: newHistory.length - 1,
-    });
-  },
-
-  resetAdjustments: () => {
-    set({ adjustments: defaultAdjustments });
-  },
-
-  toggleLayerVisibility: (layerId) => {
-    set((state) => ({
-      layers: state.layers.map((layer) =>
-        layer.id === layerId ? { ...layer, isVisible: !layer.isVisible } : layer
-      ),
-    }));
-  },
-
-  toggleLayerLock: (layerId) => {
-    set((state) => ({
-      layers: state.layers.map((layer) =>
-        layer.id === layerId ? { ...layer, isLocked: !layer.isLocked } : layer
-      ),
-    }));
-  },
-
-  undo: () => {
-    const { historyIndex } = get();
-    if (historyIndex > 0) {
-      set({ historyIndex: historyIndex - 1 });
-    }
-  },
-
-  redo: () => {
-    const { historyIndex, history } = get();
-    if (historyIndex < history.length - 1) {
-      set({ historyIndex: historyIndex + 1 });
-    }
-  },
-
-  setZoomScale: (scale) => set({ zoomScale: scale }),
-
-  setProcessing: (isProcessing, progress = 0) => set({ isProcessing, processingProgress: progress }),
-
-  clearEditor: () => {
-    set({
+export const useEditorStore = create<EditorStore>()(
+  persist(
+    (set, get) => ({
       currentProject: null,
       selectedImageUri: null,
       activeTool: null,
@@ -123,6 +102,166 @@ export const useEditorStore = create<EditorStore>((set, get) => ({
       historyIndex: 0,
       zoomScale: 1,
       isProcessing: false,
-    });
-  },
-}));
+      processingProgress: 0,
+
+      setProject: (project) => {
+        if (!project) return;
+        const uri =
+          project.processedUrl ||
+          project.processed_url ||
+          project.originalUrl ||
+          project.original_url ||
+          project.thumbnailUrl ||
+          project.thumbnail_url ||
+          (project as any).storageUrl ||
+          (project as any).storage_url ||
+          (project as any).imageUri ||
+          (project as any).imageUrl ||
+          (project as any).url ||
+          null;
+
+        const tool = project.toolUsed || (project as any).tool_used || 'Original';
+        const snapshot: EditorSnapshot = {
+          imageUri: uri,
+          adjustments: defaultAdjustments,
+          activeTool: tool,
+          timestamp: Date.now(),
+        };
+
+        set({
+          currentProject: project,
+          selectedImageUri: uri,
+          activeTool: tool,
+          adjustments: defaultAdjustments,
+          history: [snapshot],
+          historyIndex: 0,
+        });
+
+        // Dynamically require useHistoryStore to avoid circular dependency
+        try {
+          const { useHistoryStore } = require('./useHistoryStore');
+          useHistoryStore.getState().addProject(project);
+        } catch (e) {}
+      },
+
+      setSelectedImage: (uri) => {
+        const state = get();
+        if (state.selectedImageUri === uri) return;
+        const snapshot: EditorSnapshot = {
+          imageUri: uri,
+          adjustments: { ...state.adjustments },
+          activeTool: state.activeTool,
+          timestamp: Date.now(),
+        };
+        const newHistory = state.history.slice(0, state.historyIndex + 1);
+        newHistory.push(snapshot);
+        set({
+          selectedImageUri: uri,
+          history: newHistory,
+          historyIndex: newHistory.length - 1,
+        });
+      },
+
+      setActiveTool: (toolId) => {
+        set({ activeTool: toolId });
+      },
+
+      updateAdjustment: (key, value) => {
+        const state = get();
+        if (state.adjustments[key] === value) return;
+        const newAdjustments = { ...state.adjustments, [key]: value };
+        const snapshot: EditorSnapshot = {
+          imageUri: state.selectedImageUri,
+          adjustments: newAdjustments,
+          activeTool: state.activeTool,
+          timestamp: Date.now(),
+        };
+        const newHistory = state.history.slice(0, state.historyIndex + 1);
+        newHistory.push(snapshot);
+        set({
+          adjustments: newAdjustments,
+          history: newHistory,
+          historyIndex: newHistory.length - 1,
+        });
+      },
+
+      resetAdjustments: () => {
+        const state = get();
+        const snapshot: EditorSnapshot = {
+          imageUri: state.selectedImageUri,
+          adjustments: defaultAdjustments,
+          activeTool: state.activeTool,
+          timestamp: Date.now(),
+        };
+        const newHistory = state.history.slice(0, state.historyIndex + 1);
+        newHistory.push(snapshot);
+        set({
+          adjustments: defaultAdjustments,
+          history: newHistory,
+          historyIndex: newHistory.length - 1,
+        });
+      },
+
+      undo: () => {
+        const { historyIndex, history } = get();
+        if (historyIndex > 0) {
+          const newIndex = historyIndex - 1;
+          const snapshot = history[newIndex];
+          set({
+            historyIndex: newIndex,
+            selectedImageUri: snapshot.imageUri,
+            adjustments: { ...snapshot.adjustments },
+            activeTool: snapshot.activeTool,
+          });
+        }
+      },
+
+      redo: () => {
+        const { historyIndex, history } = get();
+        if (historyIndex < history.length - 1) {
+          const newIndex = historyIndex + 1;
+          const snapshot = history[newIndex];
+          set({
+            historyIndex: newIndex,
+            selectedImageUri: snapshot.imageUri,
+            adjustments: { ...snapshot.adjustments },
+            activeTool: snapshot.activeTool,
+          });
+        }
+      },
+
+      setZoomScale: (scale) => set({ zoomScale: scale }),
+
+      setProcessing: (isProcessing, progress = 0) => set({ isProcessing, processingProgress: progress }),
+
+      clearEditor: () => {
+        const defaultSnapshot: EditorSnapshot = {
+          imageUri: null,
+          adjustments: defaultAdjustments,
+          activeTool: null,
+          timestamp: Date.now(),
+        };
+        set({
+          currentProject: null,
+          selectedImageUri: null,
+          activeTool: null,
+          adjustments: defaultAdjustments,
+          history: [defaultSnapshot],
+          historyIndex: 0,
+          zoomScale: 1,
+          isProcessing: false,
+        });
+      },
+    }),
+    {
+      name: 'ai_photo_editor_current_session',
+      storage: createJSONStorage(() => customStorage),
+      partialize: (state) => ({
+        currentProject: sanitizeProject(state.currentProject),
+        selectedImageUri: sanitizeUrl(state.selectedImageUri),
+        activeTool: state.activeTool,
+        adjustments: state.adjustments,
+      }),
+    }
+  )
+);
